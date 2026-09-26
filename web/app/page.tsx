@@ -1,5 +1,6 @@
 import Backdrop from "@/components/Backdrop";
 import CityExplorer from "@/components/CityExplorer";
+import LearnMore from "@/components/LearnMore";
 import Logo from "@/components/Logo";
 import styles from "@/modules/page.module.css";
 
@@ -35,10 +36,7 @@ export default function HomePage() {
         </p>
       </section>
 
-      {/* TODO: point this at the real About page once it exists. */}
-      <a className={styles.learnMore} href="#learn-more">
-        [ Learn more ]
-      </a>
+      <LearnMore />
     </main>
   );
 }
