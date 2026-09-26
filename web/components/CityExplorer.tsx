@@ -4,12 +4,14 @@ import { useCallback, useRef, useState } from "react";
 import CityMap from "@/components/CityMap";
 import LocationSearch from "@/components/LocationSearch";
 import Sidebar, { type Representative } from "@/components/Sidebar";
+import type { Level } from "@/lib/bill";
 import type { Bill } from "@/lib/bill";
 import {
   AddressNotFoundError,
   geocodeAddress,
   type GeocodedLocation,
 } from "@/services/geocoding";
+import { OutsideOttawaRidingError, lookupRidings, type Riding } from "@/services/riding";
 import { OutsideOttawaError, lookupWard, type Ward } from "@/services/ward";
 import styles from "@/modules/page.module.css";
 
@@ -36,7 +38,10 @@ export default function CityExplorer({
   const [error, setError] = useState<string | null>(null);
   const [ward, setWard] = useState<Ward | null>(null);
   const [wardStatus, setWardStatus] = useState<WardStatus>("loading");
+  const [ridings, setRidings] = useState<Riding[]>([]);
+  const [level, setLevel] = useState<Level>("municipal");
   const wardRequestRef = useRef<AbortController | null>(null);
+  const ridingRequestRef = useRef<AbortController | null>(null);
 
   async function findWard(found: GeocodedLocation) {
     wardRequestRef.current?.abort();
@@ -56,11 +61,26 @@ export default function CityExplorer({
     }
   }
 
+  async function findRidings(found: GeocodedLocation) {
+    ridingRequestRef.current?.abort();
+    const controller = new AbortController();
+    ridingRequestRef.current = controller;
+    setRidings([]);
+    try {
+      const result = await lookupRidings(found.lat, found.lon, controller.signal);
+      if (!controller.signal.aborted) setRidings(result);
+    } catch (err) {
+      if (controller.signal.aborted) return;
+      if (!(err instanceof OutsideOttawaRidingError)) console.error("Riding lookup failed:", err);
+    }
+  }
+
   function showLocation(found: GeocodedLocation) {
     setError(null);
     setLocation(found);
     setExpanded(true);
     findWard(found);
+    findRidings(found);
   }
 
   async function handleSearch(address: string) {
@@ -92,6 +112,23 @@ export default function CityExplorer({
       }
     : undefined;
 
+  function memberFor(riding: Riding | undefined): Representative | undefined {
+    if (!riding?.member) return undefined;
+    return {
+      name: riding.member.name,
+      district: riding.name,
+      party: riding.member.party ?? undefined,
+      email: riding.member.email ?? undefined,
+    };
+  }
+
+  const federal = ridings.find((riding) => riding.level === "federal");
+  const provincial = ridings.find((riding) => riding.level === "provincial");
+  const boundary =
+    level === "municipal" ? ward?.boundary : level === "federal" ? federal?.boundary : provincial?.boundary;
+
+  const handleFilters = useCallback((filters: { level: Level }) => setLevel(filters.level), []);
+
   return (
     <>
       <div className={styles.section}>
@@ -100,7 +137,7 @@ export default function CityExplorer({
           <CityMap
             apiKey={apiKey}
             location={location}
-            boundary={ward?.boundary}
+            boundary={boundary}
             expanded={expanded}
             onClose={close}
           />
@@ -122,7 +159,12 @@ export default function CityExplorer({
           onOpen={() => setExpanded(true)}
           ward={ward ? `${ward.number} · ${ward.name}` : WARD_STATUS_LABEL[wardStatus]}
           wardNumber={ward?.number}
-          representatives={{ municipal: councillor }}
+          representatives={{
+            municipal: councillor,
+            federal: memberFor(federal),
+            provincial: memberFor(provincial),
+          }}
+          onChange={handleFilters}
           bills={bills ?? []}
           billsError={bills === null}
         />
