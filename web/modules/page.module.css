@@ -149,6 +149,8 @@
 }
 
 .map.mapExpanded {
+  /* leaves room on the left for the filters sidebar */
+  --sidebar-space: 380px;
   position: fixed;
   inset: 0;
   z-index: 100;
@@ -235,6 +237,36 @@
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+/* Keep the map's Back button clear of the side panels */
+@media (min-width: 1000px) {
+  .page:has([data-detail="open"]) .map.mapExpanded {
+    --sidebar-space: 780px;
+  }
+}
+
+.page:has([data-collapsed="true"]) .map.mapExpanded {
+  --sidebar-space: 0px;
+}
+
+@media (max-width: 999px) {
+  .map.mapExpanded {
+    --sidebar-space: 360px;
+  }
+}
+
+@media (max-width: 640px) {
+  .map.mapExpanded {
+    --sidebar-space: 0px;
+  }
+}
+
+/* Once the side panel is showing, centre the card in the space beside it */
+@media (min-width: 1000px) and (max-width: 1399px) {
+  .page:has([data-sidebar]):not(:has([data-collapsed="true"])) {
+    padding-left: 396px;
   }
 }
 

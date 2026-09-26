@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import CityMap from "@/components/CityMap";
 import LocationSearch from "@/components/LocationSearch";
+import Sidebar from "@/components/Sidebar";
 import {
   AddressNotFoundError,
   geocodeAddress,
@@ -59,6 +60,11 @@ export default function CityExplorer({ apiKey }: { apiKey?: string }) {
         busy={searching}
         error={error}
       />
+
+            {/* Filters only appear once we know where the user is. */}
+            {location && (
+        <Sidebar location={location} expanded={expanded} onOpen={() => setExpanded(true)} />
+      )}
     </>
   );
 }
