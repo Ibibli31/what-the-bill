@@ -109,6 +109,7 @@ export default function CityExplorer({
       districtCode: riding.code,
       party: riding.member.party ?? undefined,
       email: riding.member.email ?? undefined,
+      phone: riding.member.phone ?? undefined,
     };
   }
 
