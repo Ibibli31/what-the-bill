@@ -64,13 +64,8 @@ export default function LocationSearch({
     if (query === pickedRef.current) return;
     pickedRef.current = null;
     cancelPending();
-
-    if (query.length < MIN_QUERY_LENGTH) {
-      setSuggestions([]);
-      setStatus("idle");
-      setOpen(false);
-      return;
-    }
+    // Too-short queries are cleared in handleChange.
+    if (query.length < MIN_QUERY_LENGTH) return;
 
     timerRef.current = setTimeout(async () => {
       const controller = new AbortController();
@@ -93,6 +88,16 @@ export default function LocationSearch({
 
     return cancelPending;
   }, [address]);
+
+  function handleChange(value: string) {
+    setAddress(value);
+    if (value.trim().length < MIN_QUERY_LENGTH) {
+      cancelPending();
+      setSuggestions([]);
+      setStatus("idle");
+      setOpen(false);
+    }
+  }
 
   function pick(suggestion: LocationSuggestion) {
     cancelPending();
@@ -167,7 +172,7 @@ export default function LocationSearch({
           autoComplete="off"
           placeholder="Enter your location"
           value={address}
-          onChange={(e) => setAddress(e.target.value)}
+          onChange={(e) => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => setOpen(suggestions.length > 0)}
           onBlur={() => setOpen(false)}

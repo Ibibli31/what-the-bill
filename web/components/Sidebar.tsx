@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import BillDetail, { RepDetail } from "@/components/BillDetail";
-import { SAMPLE_BILLS, type Bill, type BillStatus, type Level } from "@/data/sampleBills";
+import { BILL_STATUSES, TOPICS, type Bill, type BillStatus, type Level } from "@/lib/bill";
 import type { GeocodedLocation } from "@/services/geocoding";
 import styles from "@/modules/Sidebar.module.css";
 
@@ -39,8 +39,6 @@ const SORTS: { id: SortOrder; label: string }[] = [
   { id: "lobbied", label: "Most lobbied" },
 ];
 
-const STATUSES: BillStatus[] = ["Introduced", "In committee", "Passed", "Defeated"];
-const TOPICS = ["Housing", "Transit", "Taxes", "Cost of living", "Health", "Environment"];
 
 export const DEFAULT_FILTERS: Filters = {
   level: "municipal",
@@ -66,7 +64,9 @@ type SidebarProps = {
   /** Filled in once the ward/riding lookup exists. */
   ward?: string;
   representatives?: Partial<Record<Level, Representative>>;
-  bills?: Bill[];
+  bills: Bill[];
+  /** True when the bills couldn't be loaded from the database. */
+  billsError?: boolean;
   onChange?: (filters: Filters) => void;
 };
 
@@ -98,7 +98,8 @@ export default function Sidebar({
   onOpen,
   ward,
   representatives = {},
-  bills = SAMPLE_BILLS,
+  bills,
+  billsError = false,
   onChange,
 }: SidebarProps) {
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
@@ -116,22 +117,27 @@ export default function Sidebar({
     onChange?.(filters);
   }, [filters, onChange]);
 
-  // A new address starts fresh.
-  useEffect(() => {
+  // A new address starts fresh. Adjusting state during render (rather than in
+  // an effect) avoids rendering the old panel state for one frame first.
+  const [prevLocation, setPrevLocation] = useState(location);
+  if (location !== prevLocation) {
+    setPrevLocation(location);
     setSelected(null);
     setCollapsed(false);
     setSnap("half");
-  }, [location]);
+  }
+
+  // Details belong to the map view: closing the full-screen map closes them.
+  const [prevExpanded, setPrevExpanded] = useState(expanded);
+  if (expanded !== prevExpanded) {
+    setPrevExpanded(expanded);
+    if (!expanded) setSelected(null);
+  }
 
   // Peeking only shows the top of the list, so bring the address back into view.
   useEffect(() => {
     if (snap === "peek" && panelRef.current) panelRef.current.scrollTop = 0;
   }, [snap]);
-
-  // Details belong to the map view: closing the full-screen map closes them.
-  useEffect(() => {
-    if (!expanded) setSelected(null);
-  }, [expanded]);
 
   // Close the details panel with Escape before the map handles it.
   useEffect(() => {
@@ -171,7 +177,7 @@ export default function Sidebar({
       (bill) =>
         (filters.statuses.length === 0 || filters.statuses.includes(bill.status)) &&
         (filters.topics.length === 0 || bill.topics.some((t) => filters.topics.includes(t))) &&
-        (!words || `${bill.number} ${bill.title} ${bill.summary}`.toLowerCase().includes(words))
+        (!words || `${bill.number} ${bill.title} ${bill.summary ?? ""}`.toLowerCase().includes(words))
     );
     return sortBills(matches, filters.sort);
   }, [levelBills, filters, query]);
@@ -354,7 +360,7 @@ export default function Sidebar({
 
             <p className={styles.label}>Status</p>
             <div className={styles.chips} role="group" aria-label="Status">
-              {STATUSES.map((status) => (
+              {BILL_STATUSES.map((status) => (
                 <button
                   key={status}
                   type="button"
@@ -421,7 +427,7 @@ export default function Sidebar({
         <div className={styles.listHead}>
           <p className={styles.label}>Bills</p>
           <span>
-            {visible.length} result{visible.length === 1 ? "" : "s"} · sample data
+            {visible.length} result{visible.length === 1 ? "" : "s"}
           </span>
         </div>
 
@@ -444,17 +450,25 @@ export default function Sidebar({
                   )}
                 </span>
                 <span className={styles.rowTitle}>{bill.title}</span>
-                <span className={styles.rowSummary}>
-                  {filters.textStyle === "plain" ? bill.summary : bill.officialSummary}
-                </span>
-                <span className={styles.rowVote}>
-                  {level.short} voted <b data-vote={bill.repVote}>{VOTE_LABEL[bill.repVote]}</b>
-                </span>
+                {(filters.textStyle === "plain" ? bill.summary : bill.officialSummary) && (
+                  <span className={styles.rowSummary}>
+                    {filters.textStyle === "plain" ? bill.summary : bill.officialSummary}
+                  </span>
+                )}
+                {bill.repVote && (
+                  <span className={styles.rowVote}>
+                    {level.short} voted <b data-vote={bill.repVote}>{VOTE_LABEL[bill.repVote]}</b>
+                  </span>
+                )}
               </button>
             </li>
           ))}
           {visible.length === 0 && (
-            <li className={styles.empty}>No bills match. Try clearing a filter.</li>
+            <li className={styles.empty}>
+              {billsError
+                ? "We couldn't load bills right now. Please try again later."
+                : "No bills match. Try clearing a filter."}
+            </li>
           )}
         </ul>
       </aside>

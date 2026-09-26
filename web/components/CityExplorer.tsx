@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import CityMap from "@/components/CityMap";
 import LocationSearch from "@/components/LocationSearch";
 import Sidebar, { type Representative } from "@/components/Sidebar";
+import type { Bill } from "@/lib/bill";
 import {
   AddressNotFoundError,
   geocodeAddress,
@@ -21,7 +22,14 @@ const WARD_STATUS_LABEL: Record<WardStatus, string | undefined> = {
   error: "unavailable",
 };
 
-export default function CityExplorer({ apiKey }: { apiKey?: string }) {
+export default function CityExplorer({
+  apiKey,
+  bills,
+}: {
+  apiKey?: string;
+  /** Null when the bills couldn't be loaded. */
+  bills: Bill[] | null;
+}) {
   const [location, setLocation] = useState<GeocodedLocation | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [searching, setSearching] = useState(false);
@@ -114,6 +122,8 @@ export default function CityExplorer({ apiKey }: { apiKey?: string }) {
           onOpen={() => setExpanded(true)}
           ward={ward ? `${ward.number} · ${ward.name}` : WARD_STATUS_LABEL[wardStatus]}
           representatives={{ municipal: councillor }}
+          bills={bills ?? []}
+          billsError={bills === null}
         />
       )}
     </>
