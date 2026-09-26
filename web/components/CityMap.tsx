@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { CircleMarker, GeoJSON as GeoJSONLayer, Map as LeafletMap } from "leaflet";
+import type { CircleMarker, GeoJSON as GeoJSONLayer, LatLngBounds, Map as LeafletMap } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { GeocodedLocation } from "@/services/geocoding";
+import { fetchOttawaMask } from "@/services/riding";
 import type { WardBoundary } from "@/services/ward";
 import styles from "@/modules/CityMap.module.css";
 
@@ -21,7 +22,14 @@ const WARD_OUTLINE = {
   opacity: 0.9,
   weight: 2,
   fillColor: "#d52b1e",
-  fillOpacity: 0.08,
+  fillOpacity: 0.25,
+  interactive: false,
+};
+
+const MASK_STYLE = {
+  stroke: false,
+  fillColor: "#000000",
+  fillOpacity: 0.6,
   interactive: false,
 };
 
@@ -54,6 +62,7 @@ export default function CityMap({
   const markerRef = useRef<CircleMarker | null>(null);
   const outlineRef = useRef<GeoJSONLayer | null>(null);
   const [ready, setReady] = useState(false);
+  const [bounds, setBounds] = useState<LatLngBounds | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Leaflet touches `window` when imported, so load it in the browser only.
@@ -70,13 +79,25 @@ export default function CityMap({
           zoom: 13,
           scrollWheelZoom: false,
           attributionControl: true,
+          maxBoundsViscosity: 1,
         });
         L.tileLayer(TILES, {
           attribution: ATTRIBUTION,
           maxZoom: 19,
         }).addTo(map);
+        map.createPane("mask").style.zIndex = "350";
         mapRef.current = map;
         setReady(true);
+
+        fetchOttawaMask()
+          .then((mask) => {
+            if (cancelled || !map) return;
+            L.geoJSON(mask, { style: MASK_STYLE, pane: "mask" }).addTo(map);
+            const rings = mask.type === "Polygon" ? mask.coordinates : mask.coordinates.flat();
+            const holes = rings.slice(1).flat();
+            setBounds(L.latLngBounds(holes.map(([lng, lat]) => [lat, lng])).pad(0.02));
+          })
+          .catch((err: Error) => console.error("Ottawa mask failed:", err.message));
       })
       .catch((err: Error) => {
         console.error("Map failed to load:", err);
@@ -109,6 +130,10 @@ export default function CityMap({
     // Wait a frame so the map has picked up its new size before re-centring.
     const frame = requestAnimationFrame(() => {
       map.invalidateSize();
+      if (bounds) {
+        map.setMaxBounds(bounds);
+        map.setMinZoom(map.getBoundsZoom(bounds));
+      }
       if (!location) return;
       const position: [number, number] = [location.lat, location.lon];
       if (markerRef.current) markerRef.current.setLatLng(position);
@@ -117,7 +142,7 @@ export default function CityMap({
       map.setView(position, expanded ? 17 : 15);
     });
     return () => cancelAnimationFrame(frame);
-  }, [ready, location, expanded]);
+  }, [ready, location, expanded, bounds]);
 
   useEffect(() => {
     const map = mapRef.current;

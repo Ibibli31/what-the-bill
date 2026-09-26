@@ -47,6 +47,8 @@ Geocoding uses the City of Ottawa's public ArcGIS locator (exact matches only) t
 
 **Function `riding_lookup(lat, lng)`** (`db/functions/riding_lookup.sql`): returns the federal and provincial ridings containing the point (level, code, name, member name/party/email, boundary as GeoJSON). No rows unless the point is inside an Ottawa ward. Called by the web app's `/api/riding` route.
  
+**Function `ottawa_mask()`** (`db/functions/ottawa_mask.sql`): returns the world extent minus the union of all ward boundaries (the city limits), as GeoJSON. Called by the web app's `/api/ottawa-mask` route; the map uses its holes to black out everything outside the city.
+ 
 ---
  
 ## Municipal core

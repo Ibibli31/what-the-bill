@@ -24,6 +24,16 @@ export class OutsideOttawaRidingError extends Error {
   }
 }
 
+/** Fetches the world-minus-Ottawa shape; its holes are the Ottawa ridings. */
+export async function fetchOttawaMask(signal?: AbortSignal): Promise<WardBoundary> {
+  const response = await fetch("/api/ottawa-mask?v=wards", {
+    headers: { Accept: "application/json" },
+    signal,
+  });
+  if (!response.ok) throw new Error(`Mask lookup responded with ${response.status}`);
+  return (await response.json()) as WardBoundary;
+}
+
 /** Looks up the federal and provincial ridings containing a point. */
 export async function lookupRidings(
   lat: number,
