@@ -15,15 +15,6 @@ import { OutsideOttawaRidingError, lookupRidings, type Riding } from "@/services
 import { OutsideOttawaError, lookupWard, type Ward } from "@/services/ward";
 import styles from "@/modules/page.module.css";
 
-type WardStatus = "loading" | "done" | "outside" | "error";
-
-const WARD_STATUS_LABEL: Record<WardStatus, string | undefined> = {
-  loading: undefined,
-  done: undefined,
-  outside: "outside Ottawa",
-  error: "unavailable",
-};
-
 export default function CityExplorer({
   bills,
 }: {
@@ -35,29 +26,10 @@ export default function CityExplorer({
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ward, setWard] = useState<Ward | null>(null);
-  const [wardStatus, setWardStatus] = useState<WardStatus>("loading");
   const [ridings, setRidings] = useState<Riding[]>([]);
   const [level, setLevel] = useState<Level>("municipal");
   const wardRequestRef = useRef<AbortController | null>(null);
   const ridingRequestRef = useRef<AbortController | null>(null);
-
-  async function findWard(found: GeocodedLocation) {
-    wardRequestRef.current?.abort();
-    const controller = new AbortController();
-    wardRequestRef.current = controller;
-    setWard(null);
-    setWardStatus("loading");
-    try {
-      const result = await lookupWard(found.lat, found.lon, controller.signal);
-      if (controller.signal.aborted) return;
-      setWard(result);
-      setWardStatus("done");
-    } catch (err) {
-      if (controller.signal.aborted) return;
-      if (!(err instanceof OutsideOttawaError)) console.error("Ward lookup failed:", err);
-      setWardStatus(err instanceof OutsideOttawaError ? "outside" : "error");
-    }
-  }
 
   async function findRidings(found: GeocodedLocation) {
     ridingRequestRef.current?.abort();
@@ -73,12 +45,30 @@ export default function CityExplorer({
     }
   }
 
-  function showLocation(found: GeocodedLocation) {
+  async function showLocation(found: GeocodedLocation) {
+    wardRequestRef.current?.abort();
+    const controller = new AbortController();
+    wardRequestRef.current = controller;
+    setSearching(true);
     setError(null);
-    setLocation(found);
-    setExpanded(true);
-    findWard(found);
-    findRidings(found);
+    try {
+      const result = await lookupWard(found.lat, found.lon, controller.signal);
+      if (controller.signal.aborted) return;
+      setLocation(found);
+      setWard(result);
+      setExpanded(true);
+      findRidings(found);
+    } catch (err) {
+      if (controller.signal.aborted) return;
+      if (err instanceof OutsideOttawaError) {
+        setError("That address is outside the City of Ottawa. Please choose an address within Ottawa.");
+      } else {
+        console.error("Ward lookup failed:", err);
+        setError("We couldn't check that address right now. Please try again.");
+      }
+    } finally {
+      if (wardRequestRef.current === controller) setSearching(false);
+    }
   }
 
   async function handleSearch(address: string) {
@@ -86,7 +76,7 @@ export default function CityExplorer({
     setSearching(true);
     setError(null);
     try {
-      showLocation(await geocodeAddress(address));
+      await showLocation(await geocodeAddress(address));
     } catch (err) {
       if (err instanceof AddressNotFoundError) {
         setError("We couldn't find that address. Try entering a more complete Ottawa address.");
@@ -145,6 +135,7 @@ export default function CityExplorer({
       <LocationSearch
         onSearch={handleSearch}
         onSelect={showLocation}
+        onClear={() => setError(null)}
         busy={searching}
         error={error}
       />
@@ -155,7 +146,7 @@ export default function CityExplorer({
           location={location}
           expanded={expanded}
           onOpen={() => setExpanded(true)}
-          ward={ward ? `${ward.number} · ${ward.name}` : WARD_STATUS_LABEL[wardStatus]}
+          ward={ward ? `${ward.number} · ${ward.name}` : undefined}
           wardNumber={ward?.number}
           representatives={{
             municipal: councillor,

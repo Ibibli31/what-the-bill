@@ -42,6 +42,13 @@
   background: var(--card);
 }
 
+.canvas :global(.leaflet-bar a.leaflet-disabled),
+.canvas :global(.leaflet-bar a.leaflet-disabled:hover) {
+  background: var(--panel);
+  color: rgba(255, 255, 255, 0.25);
+  cursor: default;
+}
+
 .message {
   position: absolute;
   inset: 0;

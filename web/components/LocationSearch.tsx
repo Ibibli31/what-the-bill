@@ -26,6 +26,7 @@ type SuggestionStatus = "idle" | "loading" | "done" | "error";
 type LocationSearchProps = {
   onSearch: (address: string) => void;
   onSelect: (location: LocationSuggestion) => void;
+  onClear?: () => void;
   busy?: boolean;
   error?: string | null;
 };
@@ -33,6 +34,7 @@ type LocationSearchProps = {
 export default function LocationSearch({
   onSearch,
   onSelect,
+  onClear,
   busy = false,
   error = null,
 }: LocationSearchProps) {
@@ -91,6 +93,7 @@ export default function LocationSearch({
 
   function handleChange(value: string) {
     setAddress(value);
+    if (!value.trim()) onClear?.();
     if (value.trim().length < MIN_QUERY_LENGTH) {
       cancelPending();
       setSuggestions([]);
