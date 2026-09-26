@@ -1,0 +1,70 @@
+/* Glossary words: a dotted copper underline, with a definition card on hover/tap */
+
+.term {
+  text-decoration: underline dotted var(--label);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  cursor: help;
+  border-radius: 2px;
+}
+
+.term:hover,
+.term[aria-describedby] {
+  color: var(--white);
+  background: rgba(124, 196, 171, 0.14);
+}
+
+.term:focus-visible {
+  outline: 2px solid var(--label);
+  outline-offset: 1px;
+}
+
+.tip {
+  position: fixed;
+  z-index: 1000;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 16px));
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  font-family: var(--font-sans);
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+  background: var(--panel-bar);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-inner);
+  box-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+  animation: tipIn 120ms ease-out both;
+}
+
+.tipTerm {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--label);
+}
+
+.tipText {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+@keyframes tipIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tip {
+    animation: none;
+  }
+}
