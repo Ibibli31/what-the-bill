@@ -17,6 +17,8 @@ if (existsSync(rootEnv)) {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Hides the Next.js badge in the corner during `next dev`. Build errors still show.
+  devIndicators: false,
 };
 
 export default nextConfig;
