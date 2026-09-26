@@ -503,7 +503,9 @@
     color: #ff6b5f;
   }
   
-  .rowVote b[data-vote="none"] {
+  .rowVote b[data-vote="none"],
+  .rowVote b[data-vote="paired"],
+  .rowVote b[data-vote="absent"] {
     color: var(--text-faint);
     font-weight: 500;
   }

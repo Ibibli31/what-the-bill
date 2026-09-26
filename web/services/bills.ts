@@ -1,4 +1,4 @@
-import type { Bill, BillStatus } from "@/lib/bill";
+import type { Bill, BillStatus, Vote } from "@/lib/bill";
 import { select } from "@/lib/supabase";
 
 type FederalRow = {
@@ -11,8 +11,17 @@ type FederalRow = {
   last_activity_date: string | null;
   topic_tags: string[] | null;
   source_url: string;
-  federal_votes: { vote_label: string; vote_date: string }[];
+  federal_votes: {
+    division_number: number;
+    vote_label: string;
+    vote_date: string;
+    federal_ballots: { ballot: "yea" | "nay" | "paired"; mps: { ridings: { code: string } } }[];
+  }[];
 };
+
+type MpRow = { ridings: { code: string } };
+
+const BALLOT: Record<"yea" | "nay" | "paired", Vote> = { yea: "yes", nay: "no", paired: "paired" };
 
 type ProvincialRow = {
   bill_id: number;
@@ -113,7 +122,27 @@ function relevance(topics: string[], local: boolean, updated: string | null) {
   return Math.round(40 + (topics.length > 0 ? 20 : 0) + (local ? 25 : 0) + 15 * recency);
 }
 
-function toFederal(row: FederalRow): Bill {
+/**
+ * Every Ottawa MP's ballot on the bill's latest recorded division. MPs with no
+ * ballot row were absent; bills with no recorded division get "none" for everyone.
+ */
+function federalVotes(row: FederalRow, ridingCodes: string[]) {
+  const latest = [...row.federal_votes].sort(
+    (a, b) => b.vote_date.localeCompare(a.vote_date) || b.division_number - a.division_number
+  )[0];
+  const ballots = new Map(
+    latest?.federal_ballots.map((ballot) => [ballot.mps.ridings.code, BALLOT[ballot.ballot]])
+  );
+  const votesByRiding = Object.fromEntries(
+    ridingCodes.map((code): [string, Vote] => [code, latest ? ballots.get(code) ?? "absent" : "none"])
+  );
+  return {
+    votesByRiding,
+    latestVote: latest ? { label: latest.vote_label, date: latest.vote_date } : null,
+  };
+}
+
+function toFederal(row: FederalRow, ridingCodes: string[]): Bill {
   const topics = meaningfulTopics(row.topic_tags);
   const { status, reached } = federalProgress(row);
   const otherChamber = row.origin_chamber === "house" ? "Senate" : "House of Commons";
@@ -122,6 +151,7 @@ function toFederal(row: FederalRow): Bill {
     number: `Bill ${row.number_code}`,
     level: "federal",
     wardNumber: null,
+    ...federalVotes(row, ridingCodes),
     title: row.title,
     status,
     topics,
@@ -152,6 +182,8 @@ function toProvincial(row: ProvincialRow): Bill {
     id: `p-${row.bill_id}`,
     number: `Bill ${row.bill_number}`,
     level: "provincial",
+    votesByRiding: null,
+    latestVote: null,
     wardNumber: null,
     title: row.title,
     status,
@@ -177,6 +209,8 @@ function toMotion(row: MotionRow, today: string): Bill {
     id: `m-${row.motion_id}`,
     number: `Motion ${row.motion_number}`,
     level: "municipal",
+    votesByRiding: null,
+    latestVote: null,
     wardNumber: row.wards?.ward_number ?? null,
     title: meeting.committee_name,
     status,
@@ -200,10 +234,10 @@ function toMotion(row: MotionRow, today: string): Bill {
  * (see db/schema.md, "Preset topics").
  */
 export async function getBills(): Promise<Bill[]> {
-  const [federal, provincial, motions] = await Promise.all([
+  const [federal, provincial, motions, mps] = await Promise.all([
     select<FederalRow>(
       "federal_bills",
-      "select=bill_id,number_code,title,status_name,origin_chamber,sponsor_mp_id,last_activity_date,topic_tags,source_url,federal_votes(vote_label,vote_date)"
+      "select=bill_id,number_code,title,status_name,origin_chamber,sponsor_mp_id,last_activity_date,topic_tags,source_url,federal_votes(division_number,vote_label,vote_date,federal_ballots(ballot,mps(ridings(code))))"
     ),
     select<ProvincialRow>(
       "provincial_bills",
@@ -213,7 +247,9 @@ export async function getBills(): Promise<Bill[]> {
       "motions",
       "select=motion_id,motion_number,summary,tags,result,wards(ward_number),meetings(committee_name,meeting_date,speak_by_date,source_url)"
     ),
+    select<MpRow>("mps", "select=ridings(code)"),
   ]);
+  const ridingCodes = mps.map((mp) => mp.ridings.code);
 
   const today = new Date().toISOString().slice(0, 10);
   return [
@@ -223,6 +259,6 @@ export async function getBills(): Promise<Bill[]> {
       .map(toProvincial),
     ...federal
       .filter((row) => meaningfulTopics(row.topic_tags).length > 0 || row.sponsor_mp_id !== null)
-      .map(toFederal),
+      .map((row) => toFederal(row, ridingCodes)),
   ];
 }

@@ -1,6 +1,15 @@
 export type Level = "municipal" | "provincial" | "federal";
 export type BillStatus = "Introduced" | "In committee" | "In progress" | "Passed" | "Defeated";
-export type Vote = "yes" | "no" | "none";
+/** "none" = no recorded vote on this bill; "paired"/"absent" = the member didn't vote. */
+export type Vote = "yes" | "no" | "paired" | "absent" | "none";
+
+export const VOTE_LABEL: Record<Vote, string> = {
+  yes: "Yes",
+  no: "No",
+  paired: "Paired",
+  absent: "Absent",
+  none: "No recorded vote",
+};
 
 export const BILL_STATUSES: BillStatus[] = [
   "Introduced",
@@ -41,8 +50,15 @@ export type Bill = {
   summary: string | null;
   officialSummary: string | null;
   impact: string | null;
-  /** Null until the address → representative lookup is connected. */
+  /** This address's representative's vote. Filled in by the sidebar; null if unknown. */
   repVote: Vote | null;
+  /**
+   * Each member's vote on the latest recorded division, keyed by riding code.
+   * Null where no voting data is loaded for this level.
+   */
+  votesByRiding: Record<string, Vote> | null;
+  /** The division `votesByRiding` comes from, e.g. "Third Reading" on 2026-03-25. */
+  latestVote: { label: string; date: string } | null;
   lobbying: { group: string; meetings: number }[];
   stages: { label: string; done: boolean }[];
   sourceUrl: string;

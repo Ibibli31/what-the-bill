@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import BillDetail, { RepDetail } from "@/components/BillDetail";
-import { BILL_STATUSES, TOPICS, type Bill, type BillStatus, type Level } from "@/lib/bill";
+import { BILL_STATUSES, TOPICS, VOTE_LABEL, type Bill, type BillStatus, type Level } from "@/lib/bill";
 import type { GeocodedLocation } from "@/services/geocoding";
 import styles from "@/modules/Sidebar.module.css";
 
@@ -21,6 +21,8 @@ export type Filters = {
 export type Representative = {
   name: string;
   district?: string;
+  /** Official riding code (MPs/MPPs), used to look up their votes. */
+  districtCode?: string;
   party?: string;
   email?: string;
   phone?: string;
@@ -92,7 +94,6 @@ function sortBills(bills: Bill[], sort: SortOrder) {
   });
 }
 
-const VOTE_LABEL = { yes: "Yes", no: "No", none: "No vote yet" } as const;
 
 export default function Sidebar({
   location,
@@ -169,14 +170,20 @@ export default function Sidebar({
   const level = LEVELS.find((item) => item.id === filters.level)!;
   const rep = representatives[filters.level];
 
+  const districtCode = rep?.districtCode;
+
   const levelBills = useMemo(
     () =>
       bills.filter(
         (bill) =>
           bill.level === filters.level &&
           (bill.wardNumber === null || bill.wardNumber === wardNumber)
-      ),
-    [bills, filters.level, wardNumber]
+      ).map((bill) => {
+        // Pick this address's member's vote once their riding is known.
+        const vote = districtCode ? bill.votesByRiding?.[districtCode] : undefined;
+        return vote ? { ...bill, repVote: vote } : bill;
+      }),
+    [bills, filters.level, wardNumber, districtCode]
   );
 
   const visible = useMemo(() => {
@@ -193,7 +200,7 @@ export default function Sidebar({
   const activeCount =
     filters.statuses.length + filters.topics.length + (filters.sort === "affects" ? 0 : 1);
   const selectedBill =
-    selected?.kind === "bill" ? bills.find((bill) => bill.id === selected.id) ?? null : null;
+    selected?.kind === "bill" ? levelBills.find((bill) => bill.id === selected.id) ?? null : null;
 
   // ---- Mobile sheet dragging -------------------------------------------------
   function sheetHeights() {
@@ -463,9 +470,10 @@ export default function Sidebar({
                     {filters.textStyle === "plain" ? bill.summary : bill.officialSummary}
                   </span>
                 )}
-                {bill.repVote && (
+                {bill.repVote && bill.repVote !== "none" && (
                   <span className={styles.rowVote}>
-                    {level.short} voted <b data-vote={bill.repVote}>{VOTE_LABEL[bill.repVote]}</b>
+                    {level.short} {bill.repVote === "yes" || bill.repVote === "no" ? "voted " : ""}
+                    <b data-vote={bill.repVote}>{VOTE_LABEL[bill.repVote]}</b>
                   </span>
                 )}
               </button>

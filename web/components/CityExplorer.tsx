@@ -25,10 +25,8 @@ const WARD_STATUS_LABEL: Record<WardStatus, string | undefined> = {
 };
 
 export default function CityExplorer({
-  apiKey,
   bills,
 }: {
-  apiKey?: string;
   /** Null when the bills couldn't be loaded. */
   bills: Bill[] | null;
 }) {
@@ -117,6 +115,7 @@ export default function CityExplorer({
     return {
       name: riding.member.name,
       district: riding.name,
+      districtCode: riding.code,
       party: riding.member.party ?? undefined,
       email: riding.member.email ?? undefined,
     };
@@ -135,7 +134,6 @@ export default function CityExplorer({
         <p className={styles.label}>Your city</p>
         <div className={expanded ? `${styles.map} ${styles.mapExpanded}` : styles.map}>
           <CityMap
-            apiKey={apiKey}
             location={location}
             boundary={boundary}
             expanded={expanded}
