@@ -115,11 +115,11 @@
       mask-position: 230px 0;
     }
   }
-/* Dark tint over the whole scene so the terminal card stands out */
+/* A faint haze over the scene so the white card stands out */
 .scrim {
     position: absolute;
     inset: 0;
-    background: rgba(6, 12, 18, 0.5);
+    background: rgba(214, 226, 234, 0.12);
   }  
   @media (prefers-reduced-motion: reduce) {
     .image,

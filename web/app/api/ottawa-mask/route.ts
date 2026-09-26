@@ -8,17 +8,24 @@ export async function GET() {
     return Response.json({ error: "Supabase is not configured" }, { status: 500 });
   }
 
-  const response = await fetch(`${url}/rest/v1/rpc/ottawa_mask`, {
-    method: "POST",
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: "{}",
-    next: { revalidate: 3600 },
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${url}/rest/v1/rpc/ottawa_mask`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: "{}",
+      next: { revalidate: 3600 },
+    });
+  } catch (err) {
+    // Network errors would otherwise surface as an opaque 500.
+    console.error("ottawa_mask request failed:", err);
+    return Response.json({ error: "Mask lookup failed" }, { status: 502 });
+  }
   if (!response.ok) {
     console.error("ottawa_mask failed:", response.status, await response.text());
     return Response.json({ error: "Mask lookup failed" }, { status: 502 });

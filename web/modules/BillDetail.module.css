@@ -5,18 +5,16 @@
     top: 0;
     z-index: 2;
     flex: none;
-    height: 38px;
+    height: 60px;
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 0 6px 0 8px;
-    background: var(--panel-bar);
+    padding: 0 10px;
+    background: var(--panel);
     border-bottom: 1px solid var(--panel-line);
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 1.4px;
-    text-transform: uppercase;
-    color: var(--text-faint);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
   }
   
   .windowTitle {
@@ -30,27 +28,31 @@
   
   .back,
   .close {
-    height: 30px;
-    min-width: 44px;
-    padding: 0 8px;
+    height: 38px;
+    min-width: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 10px;
     border: 0;
-    border-radius: var(--radius-inner);
+    border-radius: 999px;
     background: transparent;
     color: var(--text-muted);
     font: inherit;
-    letter-spacing: 1px;
+    font-size: 13px;
     cursor: pointer;
   }
   
   .back:hover,
   .close:hover {
-    color: var(--white);
-    background: rgba(255, 255, 255, 0.06);
+    color: var(--text);
+    background: var(--hover);
   }
   
   .back:focus-visible,
   .close:focus-visible {
-    outline: 2px solid var(--label);
+    outline: 2px solid var(--ink);
     outline-offset: -2px;
   }
   
@@ -67,7 +69,7 @@
       display: none;
     }
     .windowTitle {
-      margin-right: 60px;
+      margin-right: 76px;
     }
   }
   
@@ -111,8 +113,8 @@
     height: 22px;
     display: inline-flex;
     align-items: center;
-    padding: 0 8px;
-    border-radius: 2px;
+    padding: 0 10px;
+    border-radius: 999px;
     font-size: 11px;
     font-weight: 600;
   }
@@ -123,9 +125,9 @@
   }
   
   .tag[data-status="In committee"] {
-    background: var(--white);
-    border-color: var(--white);
-    color: var(--panel);
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--white);
   }
   
   .tag[data-status="Passed"] {
@@ -139,8 +141,8 @@
   }
   
   .topic {
-    color: var(--text-faint);
-    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    background: var(--control);
   }
   
   .title {
@@ -166,15 +168,9 @@
   
   .label {
     margin: 0;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
-    letter-spacing: 0.5px;
-    text-transform: lowercase;
     color: var(--label);
-  }
-  
-  .label::before {
-    content: "// ";
   }
   
   .text {
@@ -192,10 +188,10 @@
   
   /* Highlighted "how it affects you" block */
   .impact {
-    padding: 12px 14px;
-    background: var(--panel-bar);
-    border: 1px solid var(--panel-line);
-    border-left: 2px solid var(--copper);
+    padding: 14px 16px;
+    background: #eef6f2;
+    border: 0;
+    border-left: 3px solid var(--copper);
     border-radius: var(--radius-inner);
   }
   
@@ -214,12 +210,12 @@
     height: 26px;
     display: inline-flex;
     align-items: center;
-    padding: 0 10px;
-    border-radius: 2px;
+    padding: 0 12px;
+    border-radius: 999px;
     font-size: 12px;
     font-weight: 600;
-    background: var(--white);
-    color: var(--panel);
+    background: var(--ink);
+    color: var(--white);
   }
   
   .vote b[data-vote="no"],
@@ -268,6 +264,7 @@
     width: 8px;
     height: 8px;
     border: 1px solid var(--control-border);
+    border-radius: 50%;
     background: var(--panel);
   }
   
@@ -290,16 +287,16 @@
   }
   
   .stages li[data-done="true"]::before {
-    background: var(--white);
-    border-color: var(--white);
+    background: var(--ink);
+    border-color: var(--ink);
   }
   
   .stages li[data-done="true"]::after {
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(19, 32, 43, 0.4);
   }
   
   .stages li[data-current="true"] {
-    color: var(--white);
+    color: var(--text);
     font-weight: 600;
   }
   
@@ -344,38 +341,40 @@
   .bar {
     display: block;
     height: 6px;
-    background: rgba(255, 255, 255, 0.06);
+    border-radius: 999px;
+    background: var(--control);
+    overflow: hidden;
   }
   
   .bar i {
     display: block;
     height: 100%;
+    border-radius: 999px;
     background: var(--copper);
   }
   
   .source {
     align-self: flex-start;
-    min-height: 42px;
+    min-height: 44px;
     display: inline-flex;
     align-items: center;
-    padding: 0 16px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: var(--radius-control);
+    padding: 0 20px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--ink);
     color: var(--white);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
-    letter-spacing: 1.4px;
-    text-transform: uppercase;
     text-decoration: none;
-    transition: border-color 150ms ease;
+    transition: background 150ms ease;
   }
   
   .source:hover {
-    border-color: var(--red);
+    background: var(--ink-hover);
   }
   
   .source:focus-visible {
-    outline: 2px solid var(--label);
+    outline: 2px solid var(--ink);
     outline-offset: 2px;
   }
   
@@ -401,12 +400,12 @@
     flex: none;
     display: grid;
     place-items: center;
-    border: 1px solid var(--control-border);
-    border-radius: 2px;
+    border-radius: 50%;
+    background: var(--ink);
     font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.5px;
-    color: var(--text-muted);
+    color: var(--white);
   }
   
   .stats {
@@ -424,7 +423,7 @@
   }
   
   .stats div + div {
-    border-left: 1px dashed var(--panel-line);
+    border-left: 1px solid var(--panel-line);
   }
   
   .stats b {
@@ -452,7 +451,7 @@
     gap: 12px;
     padding: 11px 4px;
     border: 0;
-    border-bottom: 1px dashed var(--panel-line);
+    border-bottom: 1px solid var(--panel-line);
     background: transparent;
     color: inherit;
     font: inherit;
@@ -461,11 +460,11 @@
   }
   
   .record button:hover {
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--panel-bar);
   }
   
   .record button:focus-visible {
-    outline: 2px solid var(--label);
+    outline: 2px solid var(--ink);
     outline-offset: -2px;
   }
   

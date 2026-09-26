@@ -7,18 +7,18 @@
   overflow: hidden;
 }
 
-/* Terminal window: near-black, thin border, small corner radius */
+/* White card: the map across the top, then the header and search */
 .card {
+  --card-pad: 30px;
   width: min(460px, 100%);
-  padding: 0 22px 18px;
+  padding: 0 var(--card-pad) 22px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
   font-family: var(--font-sans);
   background: var(--panel);
-  border: 1px solid var(--panel-border);
   border-radius: var(--radius-panel);
-  box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.8);
+  box-shadow: var(--shadow-card);
   /* "backwards", not "both": a lingering transform would trap the full-screen map inside the card. */
   animation: rise 600ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
 }
@@ -40,117 +40,98 @@
   animation-delay: 420ms;
 }
 
-/* Window bar across the top of the card */
-.titlebar {
-  margin: 0 -22px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  padding: 0 14px;
-  background: var(--panel-bar);
-  border-bottom: 1px solid var(--panel-line);
-  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 1.4px;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-.lights {
-  display: flex;
-  gap: 7px;
-}
-
-.lights i {
-  width: 9px;
-  height: 9px;
-  display: block;
-}
-
-.lightRed {
-  background: var(--red);
-}
-
-.lightWhite {
-  background: var(--white);
-}
-
-.windowTitle {
-  flex: 1;
-  text-align: center;
-  /* balance the traffic lights on the left */
-  margin-right: 41px;
-}
-
+/* Sits over the bottom edge of the map */
 .header {
+  position: relative;
+  z-index: 1;
+  margin-top: -66px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding-top: 6px;
+}
+
+/* Navy disc with a white ring, holding the Parliament drawing */
+.badge {
+  width: 100px;
+  height: 100px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+  border: 6px solid var(--panel);
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 8px 20px -10px rgba(19, 32, 43, 0.5);
 }
 
 .logo {
-  width: 96px;
+  width: 58px;
   height: auto;
-  color: var(--text);
-  margin-bottom: 12px;
+  color: var(--white);
+  /* thicker lines so the drawing reads at badge size */
+  stroke-width: 3;
 }
 
 .title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(32px, 9vw, 44px);
+  font-size: clamp(34px, 9vw, 44px);
   font-weight: 800;
   line-height: 1.02;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   color: var(--text);
 }
 
 .tagline {
-  margin: 10px 0 0;
+  margin: 12px 0 0;
   font-size: 15px;
   color: var(--text-muted);
 }
 
+/* Map runs edge to edge across the top of the card */
 .section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* Code-comment style labels: "// your city" */
-.label {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: lowercase;
-  color: var(--label);
-}
-
-.label::before {
-  content: "// ";
+  margin: 0 calc(-1 * var(--card-pad));
 }
 
 .map {
   position: relative;
-  aspect-ratio: 1.55;
-  border: 1px dashed var(--map-frame);
-  border-radius: var(--radius-inner);
+  z-index: 0;
+  aspect-ratio: 1.75;
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
   overflow: hidden;
   background: var(--map-bg);
-  transition: border-color 200ms ease;
 }
 
-.map:hover {
-  border-color: var(--label);
+/* "Your city · Ottawa" pill over the map */
+.mapTag {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 1;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--panel);
+  box-shadow: 0 2px 8px -2px rgba(19, 32, 43, 0.25);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  pointer-events: none;
+}
+
+/* Editable address bar across the top of the full-screen map */
+.mapSearch {
+  position: absolute;
+  top: 20px;
+  left: calc(20px + var(--sidebar-space, 0px));
+  right: 20px;
+  z-index: 1;
+  max-width: 640px;
 }
 
 .map.mapExpanded {
   /* leaves room on the left for the filters sidebar */
-  --sidebar-space: 380px;
+  --sidebar-space: 430px;
   position: fixed;
   inset: 0;
   z-index: 100;
@@ -173,49 +154,50 @@
 
 .footer {
   margin: 0;
-  padding-top: 14px;
-  border-top: 1px dashed var(--panel-line);
+  padding-top: 18px;
+  border-top: 1px solid var(--panel-line);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 11px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--text-faint);
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.footer svg {
+  flex: none;
 }
 
 .learnMore {
   position: fixed;
   right: 24px;
   bottom: 24px;
-  min-height: 44px;
+  min-height: 48px;
   display: inline-flex;
   align-items: center;
-  padding: 0 18px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 999px;
   background: var(--panel);
-  color: var(--white);
+  color: var(--text);
+  box-shadow: 0 10px 30px -12px rgba(19, 32, 43, 0.45);
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: 1.6px;
-  text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
-  transition: border-color 150ms ease, color 150ms ease, transform 150ms ease;
+  transition: box-shadow 150ms ease, transform 150ms ease;
   animation: fadeUp 500ms cubic-bezier(0.2, 0.7, 0.2, 1) 700ms backwards;
 }
 
 .learnMore:hover {
-  border-color: var(--red);
-  color: var(--white);
   transform: translateY(-2px);
+  box-shadow: 0 14px 34px -12px rgba(19, 32, 43, 0.55);
 }
 
 .learnMore:focus-visible {
-  outline: 2px solid var(--red);
+  outline: 2px solid var(--ink);
   outline-offset: 3px;
 }
 
@@ -241,10 +223,10 @@
   }
 }
 
-/* Keep the map's Back button clear of the side panels */
+/* Keep the map's address bar clear of the side panels */
 @media (min-width: 1000px) {
   .page:has([data-detail="open"]) .map.mapExpanded {
-    --sidebar-space: 780px;
+    --sidebar-space: 870px;
   }
 }
 
@@ -254,7 +236,7 @@
 
 @media (max-width: 999px) {
   .map.mapExpanded {
-    --sidebar-space: 360px;
+    --sidebar-space: 390px;
   }
 }
 
@@ -267,30 +249,40 @@
 /* Once the side panel is showing, centre the card in the space beside it */
 @media (min-width: 1000px) and (max-width: 1399px) {
   .page:has([data-sidebar]):not(:has([data-collapsed="true"])) {
-    padding-left: 396px;
+    padding-left: 446px;
   }
 }
 
 @media (max-width: 520px) {
+  .mapSearch {
+    top: 14px;
+    left: 14px;
+    right: 14px;
+  }
+
   .page {
     padding-top: 24px;
   }
 
   .card {
-    padding: 0 16px 16px;
+    --card-pad: 18px;
   }
 
-  .titlebar {
-    margin: 0 -16px;
-  }
-
-  .windowTitle {
-    font-size: 10px;
-    letter-spacing: 1px;
+  .badge {
+    width: 88px;
+    height: 88px;
   }
 
   .logo {
-    width: 84px;
+    width: 50px;
+  }
+
+  .header {
+    margin-top: -58px;
+  }
+
+  .footer {
+    font-size: 13px;
   }
 
   .learnMore {
@@ -308,15 +300,11 @@
   .card {
     gap: 14px;
   }
-  .logo {
-    width: 80px;
-    margin-bottom: 8px;
-  }
   .title {
     font-size: 38px;
   }
   .map {
-    aspect-ratio: 1.8;
+    aspect-ratio: 2;
   }
 }
 
@@ -324,14 +312,21 @@
   .card {
     gap: 12px;
   }
+  .badge {
+    width: 80px;
+    height: 80px;
+  }
   .logo {
-    width: 64px;
+    width: 44px;
+  }
+  .header {
+    margin-top: -54px;
   }
   .title {
     font-size: 32px;
   }
   .map {
-    aspect-ratio: 2.3;
+    aspect-ratio: 2.5;
   }
 }
 
@@ -345,4 +340,20 @@
   .learnMore:hover {
     transform: none;
   }
+}
+/* The small map on the card has no attribution line; the full-screen map keeps it.
+   The pill takes the top-left, so the zoom buttons move to the bottom-right. */
+.map:not(.mapExpanded) :global(.leaflet-control-attribution) {
+  display: none;
+}
+
+.map:not(.mapExpanded) :global(.leaflet-top.leaflet-left) {
+  top: auto;
+  bottom: 0;
+  left: auto;
+  right: 0;
+}
+
+.map:not(.mapExpanded) :global(.leaflet-top.leaflet-left .leaflet-control) {
+  margin: 0 12px 12px 0;
 }

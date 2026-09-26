@@ -23,29 +23,28 @@ export default async function HomePage() {
       <Backdrop />
 
       <section className={styles.card} aria-labelledby="site-title">
-        {/* Terminal-style window bar */}
-        <div className={styles.titlebar} aria-hidden="true">
-          <span className={styles.lights}>
-            <i className={styles.lightRed} />
-            <i className={styles.lightWhite} />
-            <i className={styles.lightRed} />
-          </span>
-          <span className={styles.windowTitle}>whatthebill.ca — ward lookup</span>
-        </div>
-
-        <header className={styles.header}>
-          <Logo className={styles.logo} />
-          <h1 id="site-title" className={styles.title}>
-            What The Bill
-          </h1>
-          <p className={styles.tagline}>Your city. Your government. In plain English.</p>
-        </header>
-
-        <CityExplorer bills={bills} />
+        {/* The map sits across the top of the card, then the header, then the search. */}
+        <CityExplorer bills={bills}>
+          <header className={styles.header}>
+            <span className={styles.badge}>
+              <Logo className={styles.logo} />
+            </span>
+            <h1 id="site-title" className={styles.title}>
+              What The Bill
+            </h1>
+            <p className={styles.tagline}>Your city. Your government. In plain English.</p>
+          </header>
+        </CityExplorer>
 
         <p className={styles.footer}>
-          <span>Status: ready</span>
-          <span>Ottawa · v0.1</span>
+          <svg width="16" height="20" viewBox="0 0 16 20" aria-hidden="true">
+            <path
+              d="M8 0a8 8 0 0 0-8 8c0 5.6 8 12 8 12s8-6.4 8-12a8 8 0 0 0-8-8Z"
+              fill="var(--red)"
+            />
+            <circle cx="8" cy="8" r="3" fill="#ffffff" />
+          </svg>
+          Built for Ottawa. By the people, for the people.
         </p>
       </section>
 

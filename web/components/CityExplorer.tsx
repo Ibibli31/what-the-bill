@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, type ReactNode } from "react";
 import CityMap from "@/components/CityMap";
 import LocationSearch from "@/components/LocationSearch";
 import Sidebar, { type Representative } from "@/components/Sidebar";
@@ -17,9 +17,12 @@ import styles from "@/modules/page.module.css";
 
 export default function CityExplorer({
   bills,
+  children,
 }: {
   /** Null when the bills couldn't be loaded. */
   bills: Bill[] | null;
+  /** Shown between the map and the search box (the card's header). */
+  children?: ReactNode;
 }) {
   const [location, setLocation] = useState<GeocodedLocation | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -89,8 +92,6 @@ export default function CityExplorer({
     }
   }
 
-  const close = useCallback(() => setExpanded(false), []);
-
   const councillor: Representative | undefined = ward?.councillor
     ? {
         name: ward.councillor.name,
@@ -121,18 +122,34 @@ export default function CityExplorer({
   return (
     <>
       <div className={styles.section}>
-        <p className={styles.label}>Your city</p>
         <div className={expanded ? `${styles.map} ${styles.mapExpanded}` : styles.map}>
           <CityMap
             location={location}
             boundary={boundary}
             expanded={expanded}
-            onClose={close}
           />
+          {!expanded && <p className={styles.mapTag}>Your city · Ottawa</p>}
+          {expanded && location && (
+            <div className={styles.mapSearch}>
+              <LocationSearch
+                id="map-location"
+                compact
+                currentAddress={location.displayName}
+                onSearch={handleSearch}
+                onSelect={showLocation}
+                onClear={() => setError(null)}
+                busy={searching}
+                error={error}
+              />
+            </div>
+          )}
         </div>
       </div>
 
+      {children}
+
       <LocationSearch
+        currentAddress={location?.displayName}
         onSearch={handleSearch}
         onSelect={showLocation}
         onClear={() => setError(null)}

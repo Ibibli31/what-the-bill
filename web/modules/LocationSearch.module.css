@@ -4,52 +4,42 @@
   gap: 8px;
 }
 
-/* Code-comment style label: "// your location" */
 .label {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: lowercase;
   color: var(--label);
 }
 
-.label::before {
-  content: "// ";
-}
-
-/* Anchors the prompt, the arrow button and the suggestions panel to the input */
+/* Anchors the icon, the arrow button and the suggestions panel to the input */
 .field {
   position: relative;
 }
 
-/* Red "$" prompt at the start of the input */
-.field::before {
-  content: "$";
+/* Magnifying glass at the start of the input */
+.icon {
   position: absolute;
-  left: 14px;
-  top: 24px;
+  left: 18px;
+  top: 28px;
   transform: translateY(-50%);
   z-index: 1;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--red);
+  color: var(--text-muted);
   pointer-events: none;
 }
 
-/* Dark terminal input */
+/* Soft grey rounded input */
 .input {
   width: 100%;
-  height: 48px;
-  padding: 0 56px 0 32px;
+  height: 56px;
+  padding: 0 64px 0 50px;
   font: inherit;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--control-text);
-  caret-color: var(--label);
+  caret-color: var(--ink);
   background: var(--control);
   border: 1px solid var(--control-border);
   border-radius: var(--radius-control);
   outline: none;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
 }
 
 .input::placeholder {
@@ -57,45 +47,42 @@
 }
 
 .input:hover {
-  border-color: rgba(255, 255, 255, 0.35);
+  border-color: #c9d1d8;
 }
 
 .input:focus {
-  border-color: var(--label);
-  box-shadow: 0 0 0 3px rgba(124, 196, 171, 0.18);
+  background: var(--panel);
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(19, 32, 43, 0.1);
 }
 
+/* Navy arrow button inside the input */
 .submit {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 36px;
-  height: 36px;
+  top: 7px;
+  right: 7px;
+  width: 42px;
+  height: 42px;
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 3px;
-  background: var(--red);
+  border-radius: 10px;
+  background: var(--ink);
   color: var(--white);
   cursor: pointer;
-  opacity: 0;
-  transform: scale(0.85);
-  pointer-events: none;
-  transition: opacity 150ms ease, transform 150ms ease, background 150ms ease;
-}
-
-.submit[data-visible="true"] {
-  opacity: 1;
-  transform: scale(1);
-  pointer-events: auto;
+  transition: background 150ms ease, transform 150ms ease;
 }
 
 .submit:hover {
-  background: var(--red-dark);
+  background: var(--ink-hover);
+}
+
+.submit:active {
+  transform: scale(0.95);
 }
 
 .submit:focus-visible {
-  outline: 2px solid var(--label);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
@@ -108,10 +95,10 @@
   margin: 0 2px;
   font-size: 13px;
   line-height: 1.4;
-  color: var(--text-muted);
+  color: var(--red-dark);
 }
 
-/* Suggestions: a dark panel like the rest of the terminal */
+/* Suggestions: a white dropdown under the input */
 .suggestions {
   position: absolute;
   top: calc(100% + 6px);
@@ -119,10 +106,10 @@
   right: 0;
   z-index: 20;
   padding: 6px;
-  background: var(--panel-bar);
+  background: var(--panel);
   border: 1px solid var(--control-border);
   border-radius: var(--radius-control);
-  box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 18px 40px -12px rgba(19, 32, 43, 0.35);
   text-align: left;
   overflow-y: auto;
 }
@@ -140,7 +127,7 @@
 
 .suggestion {
   padding: 10px 12px;
-  border-radius: 3px;
+  border-radius: 8px;
   font-size: 14px;
   line-height: 1.35;
   color: var(--text);
@@ -148,8 +135,7 @@
 }
 
 .suggestion[data-active="true"] {
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: inset 2px 0 0 var(--red);
+  background: var(--hover);
 }
 
 .suggestionStatus {
@@ -164,11 +150,54 @@
   padding: 6px 12px 2px;
   font-size: 11px;
   color: var(--text-faint);
-  border-top: 1px dashed var(--panel-line);
+  border-top: 1px solid var(--panel-line);
 }
 
 .attribution a {
   color: inherit;
+}
+
+/* Compact: the address bar floating over the full-screen map */
+.compact .input {
+  height: 48px;
+  padding: 0 54px 0 44px;
+  font-size: 15px;
+  background: var(--panel);
+  border-color: transparent;
+  border-radius: 999px;
+  box-shadow: 0 6px 20px -6px rgba(19, 32, 43, 0.4);
+  text-overflow: ellipsis;
+}
+
+.compact .input:hover {
+  border-color: var(--control-border);
+}
+
+.compact .input:focus {
+  border-color: var(--ink);
+  box-shadow: 0 6px 20px -6px rgba(19, 32, 43, 0.4), 0 0 0 3px rgba(19, 32, 43, 0.1);
+}
+
+.compact .icon {
+  left: 16px;
+  top: 24px;
+}
+
+.compact .submit {
+  top: 6px;
+  right: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.compact .error {
+  align-self: flex-start;
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: var(--radius-inner);
+  background: var(--panel);
+  box-shadow: 0 6px 20px -6px rgba(19, 32, 43, 0.4);
 }
 
 @media (prefers-reduced-motion: reduce) {

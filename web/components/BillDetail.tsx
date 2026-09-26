@@ -25,11 +25,16 @@ function Titlebar({ title, onClose }: { title: string; onClose: () => void }) {
     <div className={styles.titlebar}>
       {/* Phones/tablets: the details cover the list, so this reads as "back" */}
       <button type="button" className={styles.back} onClick={onClose}>
-        &lt; back
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M19 12H5M11 6l-6 6 6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Back
       </button>
       <span className={styles.windowTitle}>{title}</span>
       <button type="button" className={styles.close} onClick={onClose} aria-label="Close details">
-        [ × ]
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+        </svg>
       </button>
     </div>
   );
@@ -138,7 +143,7 @@ export default function BillDetail({
         </section>
 
         <a className={styles.source} href={bill.sourceUrl} target="_blank" rel="noreferrer">
-          [ Read the official text ]
+          Read the official text
         </a>
       </div>
     </>
@@ -186,7 +191,7 @@ export function RepDetail({
             {rep.phone && <p className={styles.text}>{rep.phone}</p>}
             {rep.email && (
               <a className={styles.source} href={`mailto:${rep.email}`}>
-                [ Email {rep.name} ]
+                Email {rep.name}
               </a>
             )}
           </section>

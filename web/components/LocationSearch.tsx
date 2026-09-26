@@ -29,6 +29,11 @@ type LocationSearchProps = {
   onClear?: () => void;
   busy?: boolean;
   error?: string | null;
+  /** Compact bar over the full-screen map, pre-filled with the address being shown. */
+  compact?: boolean;
+  /** The address currently shown; fills the box whenever it changes. */
+  currentAddress?: string;
+  id?: string;
 };
 
 export default function LocationSearch({
@@ -37,6 +42,9 @@ export default function LocationSearch({
   onClear,
   busy = false,
   error = null,
+  compact = false,
+  currentAddress,
+  id = "location",
 }: LocationSearchProps) {
   const [address, setAddress] = useState("");
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
@@ -53,6 +61,13 @@ export default function LocationSearch({
   // The text a suggestion just filled in; typing it doesn't need a new search.
   const pickedRef = useRef<string | null>(null);
   const hasValue = address.trim().length > 0;
+
+  // Show the address that was found, without searching for it again.
+  useEffect(() => {
+    if (currentAddress === undefined) return;
+    pickedRef.current = currentAddress.trim();
+    setAddress(currentAddress);
+  }, [currentAddress]);
 
   function cancelPending() {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -117,6 +132,8 @@ export default function LocationSearch({
     if (!hasValue || busy) return;
     cancelPending();
     setOpen(false);
+    // Already showing this address: searching its long name again can land somewhere else.
+    if (currentAddress !== undefined && address.trim() === currentAddress.trim()) return;
     onSearch(address.trim());
   }
 
@@ -161,40 +178,55 @@ export default function LocationSearch({
   }, [showPanel]);
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit} role="search" aria-busy={busy}>
-      <label htmlFor="location" className={styles.label}>
-        Your location
+    <form
+      className={compact ? `${styles.form} ${styles.compact}` : styles.form}
+      onSubmit={handleSubmit}
+      role="search"
+      aria-busy={busy}
+    >
+      <label htmlFor={id} className={compact ? "visually-hidden" : styles.label}>
+        {compact ? "Change address" : "Your location"}
       </label>
       <div className={styles.field}>
+        <svg className={styles.icon} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="2" />
+          <path d="m16 16 4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
         <input
           ref={inputRef}
-          id="location"
+          id={id}
           className={styles.input}
           type="text"
           inputMode="search"
           autoComplete="off"
-          placeholder="Enter your location"
+          placeholder="Enter your address or postal code"
           value={address}
           onChange={(e) => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          onFocus={() => setOpen(suggestions.length > 0)}
-          onBlur={() => setOpen(false)}
+          onFocus={(e) => {
+            setOpen(suggestions.length > 0);
+            // Compact bar: select the current address so typing replaces it.
+            if (compact) e.target.select();
+          }}
+          onBlur={(e) => {
+            setOpen(false);
+            // Show the start of a long address again once the box is left.
+            e.target.scrollLeft = 0;
+          }}
           role="combobox"
           aria-autocomplete="list"
           aria-expanded={showPanel}
-          aria-controls="location-suggestions"
+          aria-controls={`${id}-suggestions`}
           aria-activedescendant={
-            showPanel && activeIndex >= 0 ? `location-suggestion-${activeIndex}` : undefined
+            showPanel && activeIndex >= 0 ? `${id}-suggestion-${activeIndex}` : undefined
           }
           aria-invalid={error ? true : undefined}
-          aria-describedby={error ? "location-error" : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
         />
         <button
           type="submit"
           className={styles.submit}
           aria-label="Find my representatives"
-          data-visible={hasValue}
-          tabIndex={hasValue ? 0 : -1}
           disabled={busy}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -217,11 +249,11 @@ export default function LocationSearch({
             onMouseDown={(e) => e.preventDefault()}
           >
             {suggestions.length > 0 && (
-              <ul id="location-suggestions" role="listbox" className={styles.suggestionList}>
+              <ul id={`${id}-suggestions`} role="listbox" className={styles.suggestionList}>
                 {suggestions.map((suggestion, i) => (
                   <li
                     key={suggestion.displayName}
-                    id={`location-suggestion-${i}`}
+                    id={`${id}-suggestion-${i}`}
                     role="option"
                     aria-selected={i === activeIndex}
                     className={styles.suggestion}
@@ -251,7 +283,7 @@ export default function LocationSearch({
       </div>
 
       {error && (
-        <p id="location-error" className={styles.error} role="alert">
+        <p id={`${id}-error`} className={styles.error} role="alert">
           {error}
         </p>
       )}

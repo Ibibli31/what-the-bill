@@ -76,13 +76,8 @@ export default function LearnMore() {
       {open && (
         <aside id="learn-more" className={styles.panel} aria-labelledby="learn-more-title">
           <div className={styles.titlebar}>
-            <span className={pageStyles.lights} aria-hidden="true">
-              <i className={pageStyles.lightRed} />
-              <i className={pageStyles.lightWhite} />
-              <i className={pageStyles.lightRed} />
-            </span>
             <span id="learn-more-title" className={styles.windowTitle}>
-              what the bill — about
+              About What The Bill
             </span>
           </div>
 
@@ -109,7 +104,7 @@ export default function LearnMore() {
         aria-controls="learn-more"
         onClick={() => setOpen((isOpen) => !isOpen)}
       >
-        {open ? "[ Hide ]" : "[ Learn more ]"}
+        {open ? "Hide" : "Learn more"}
       </button>
     </>
   );

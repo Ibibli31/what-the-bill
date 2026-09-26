@@ -52,7 +52,7 @@ export const DEFAULT_FILTERS: Filters = {
 
 /** Mobile bottom-sheet positions, like Google Maps. */
 type Snap = "peek" | "half" | "full";
-const TOP_GAP = 72; // keeps the map's Back button visible above a full sheet
+const TOP_GAP = 72; // keeps the map's address bar visible above a full sheet
 const PEEK = 132;
 
 type Selection = { kind: "bill"; id: string } | { kind: "rep" } | null;
@@ -281,20 +281,9 @@ export default function Sidebar({
         aria-label="Bills near you"
         inert={collapsed || undefined}
       >
-        <div className={styles.titlebar}>
-          <span className={styles.lights} aria-hidden="true">
-            <i className={styles.lightRed} />
-            <i className={styles.lightWhite} />
-            <i className={styles.lightRed} />
-          </span>
-          <span className={styles.windowTitle}>results</span>
-        </div>
-
         <div className={styles.head}>
-          <p className={styles.label}>Your address</p>
-          <p className={styles.address}>{location.displayName}</p>
           <p className={styles.meta}>
-            ward <span>{ward ?? "pending"}</span>
+            Ward<span>{ward ?? "pending"}</span>
           </p>
 
           <div className={styles.segmented} role="group" aria-label="Level of government">
@@ -326,9 +315,9 @@ export default function Sidebar({
               <span className={styles.repRole}>{level.role}</span>
               <span className={styles.repName}>{rep?.name ?? "Not loaded yet"}</span>
             </span>
-            <span className={styles.chevron} aria-hidden="true">
-              &gt;
-            </span>
+            <svg className={styles.chevron} width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
         </div>
 
@@ -433,7 +422,7 @@ export default function Sidebar({
                   }))
                 }
               >
-                [ clear filters ]
+                Clear filters
               </button>
             )}
           </div>
@@ -523,7 +512,15 @@ export default function Sidebar({
         aria-label={collapsed ? "Show side panel" : "Hide side panel"}
         onClick={() => setCollapsed((value) => !value)}
       >
-        <span aria-hidden="true">{collapsed ? ">" : "<"}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d={collapsed ? "m9 6 6 6-6 6" : "m15 6-6 6 6 6"}
+            stroke="currentColor"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
       </button>
     </div>
   );

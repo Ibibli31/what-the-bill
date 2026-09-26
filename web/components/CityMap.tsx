@@ -47,14 +47,12 @@ type CityMapProps = {
   location?: GeocodedLocation | null;
   boundary?: WardBoundary | null;
   expanded?: boolean;
-  onClose?: () => void;
 };
 
 export default function CityMap({
   location = null,
   boundary = null,
   expanded = false,
-  onClose,
 }: CityMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const leafletRef = useRef<Leaflet | null>(null);
@@ -157,36 +155,10 @@ export default function CityMap({
     markerRef.current?.bringToFront();
   }, [ready, boundary]);
 
-  useEffect(() => {
-    if (!expanded || !onClose) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [expanded, onClose]);
-
   return (
     <div className={styles.map} role="region" aria-label="Map of Ottawa">
       <div ref={containerRef} className={styles.canvas} />
       {error && <p className={styles.message}>{error}</p>}
-      {expanded && (
-        <div className={styles.toolbar}>
-          <button type="button" className={styles.back} onClick={onClose}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M19 12H5M11 6l-6 6 6 6"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Back
-          </button>
-          {location && <p className={styles.place}>{location.displayName}</p>}
-        </div>
-      )}
     </div>
   );
 }

@@ -6,34 +6,38 @@
   /* Accents */
   --red: #d52b1e;          /* the flag */
   --red-dark: #b3241a;
-  --copper: #7cc4ab;       /* Parliament's copper roofs */
+  --copper: #2f8a6b;       /* Parliament's copper roofs, dark enough to read on white */
   --white: #ffffff;
+  --ink: #13202b;          /* deep navy: logo badge, buttons, selected states */
+  --ink-hover: #22333f;
 
-  /* Terminal window */
-  --panel: #0b1117;
-  --panel-bar: #101820;
-  --panel-line: rgba(255, 255, 255, 0.12);
-  --panel-border: rgba(255, 255, 255, 0.14);
+  /* White card */
+  --panel: #ffffff;
+  --panel-bar: #f5f7f9;
+  --panel-line: #e6eaee;
+  --panel-border: rgba(19, 32, 43, 0.08);
+  --shadow-card: 0 30px 70px -28px rgba(19, 32, 43, 0.45);
 
   /* Text */
-  --text: var(--white);
-  --text-muted: #b8c4cc;
-  --text-faint: #8a98a3;
-  --label: var(--copper);
+  --text: var(--ink);
+  --text-muted: #4b5a66;
+  --text-faint: #7a8893;
+  --label: #34424d;
 
-  /* Dark input with a light border */
-  --control: #070b0f;
-  --control-border: rgba(255, 255, 255, 0.18);
-  --control-text: var(--white);
-  --control-placeholder: rgba(255, 255, 255, 0.4);
+  /* Soft grey input */
+  --control: #f4f6f8;
+  --control-border: #dde3e8;
+  --control-text: var(--ink);
+  --control-placeholder: #7d8a94;
+  --hover: rgba(19, 32, 43, 0.05);
 
   /* Map */
-  --map-bg: #111b23;
-  --map-frame: rgba(255, 255, 255, 0.25);
+  --map-bg: #e6ebee;
+  --map-frame: rgba(19, 32, 43, 0.12);
 
-  --radius-panel: 8px;
-  --radius-inner: 4px;
-  --radius-control: 4px;
+  --radius-panel: 24px;
+  --radius-inner: 12px;
+  --radius-control: 14px;
 
   /* Older names still used by the map toolbar; kept so nothing breaks */
   --card: var(--panel);
@@ -57,7 +61,7 @@ body {
 body {
   font-family: var(--font-sans);
   color: var(--text);
-  background: #111b23;
+  background: #d9e7f0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

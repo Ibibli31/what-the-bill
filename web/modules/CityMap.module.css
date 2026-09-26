@@ -26,20 +26,27 @@
   color: inherit;
 }
 
+.canvas :global(.leaflet-bar) {
+  border: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px -4px rgba(19, 32, 43, 0.35);
+}
+
 .canvas :global(.leaflet-bar a) {
   background: var(--panel);
-  border-bottom-color: rgba(255, 255, 255, 0.15);
-  color: var(--white);
+  border-bottom-color: var(--panel-line);
+  color: var(--text);
 }
 
 .canvas :global(.leaflet-bar a:hover) {
-  background: var(--card);
+  background: var(--panel-bar);
 }
 
 .canvas :global(.leaflet-bar a.leaflet-disabled),
 .canvas :global(.leaflet-bar a.leaflet-disabled:hover) {
   background: var(--panel);
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(19, 32, 43, 0.25);
   cursor: default;
 }
 
@@ -54,69 +61,4 @@
   font-size: 14px;
   text-align: center;
   color: var(--text-faint);
-}
-
-.toolbar {
-  position: absolute;
-  top: 20px;
-  left: calc(20px + var(--sidebar-space, 0px));
-  right: 20px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  pointer-events: none;
-}
-
-.back {
-  pointer-events: auto;
-  flex: none;
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 18px 0 14px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: var(--radius-control);
-  background: var(--panel);
-  color: var(--white);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 1.4px;
-  text-transform: uppercase;
-  cursor: pointer;
-  box-shadow: 0 6px 20px -6px rgba(0, 0, 0, 0.45);
-}
-
-.back:hover {
-  border-color: var(--red);
-}
-
-.back:focus-visible {
-  outline: 2px solid var(--label);
-  outline-offset: 3px;
-}
-
-.place {
-  pointer-events: auto;
-  min-width: 0;
-  margin: 0;
-  padding: 12px 16px;
-  border-radius: var(--radius-control);
-  background: var(--card);
-  border: 1px solid var(--card-edge);
-  color: var(--text);
-  font-size: 14px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  box-shadow: 0 6px 20px -6px rgba(0, 0, 0, 0.45);
-}
-
-@media (max-width: 520px) {
-  .toolbar {
-    top: 14px;
-    left: 14px;
-    right: 14px;
-  }
 }

@@ -25,12 +25,26 @@ export class OutsideOttawaRidingError extends Error {
 }
 
 /** Fetches the world-minus-Ottawa shape; its holes are the Ottawa ridings. */
+const MASK_ATTEMPTS = 3;
+
 export async function fetchOttawaMask(signal?: AbortSignal): Promise<WardBoundary> {
-  const response = await fetch("/api/ottawa-mask?v=wards", {
-    headers: { Accept: "application/json" },
-    signal,
-  });
-  if (!response.ok) throw new Error(`Mask lookup responded with ${response.status}`);
+  // The mask is decoration, so ride out brief server or network hiccups before giving up.
+  let response: Response | null = null;
+  for (let attempt = 1; attempt <= MASK_ATTEMPTS; attempt++) {
+    if (attempt > 1) await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt - 1)));
+    try {
+      response = await fetch("/api/ottawa-mask?v=wards", {
+        headers: { Accept: "application/json" },
+        signal,
+      });
+    } catch (err) {
+      if (signal?.aborted || attempt === MASK_ATTEMPTS) throw err;
+      continue;
+    }
+    // Only server errors are worth retrying; 404 means no wards are loaded.
+    if (response.status < 500) break;
+  }
+  if (!response?.ok) throw new Error(`Mask lookup responded with ${response?.status}`);
   return (await response.json()) as WardBoundary;
 }
 
