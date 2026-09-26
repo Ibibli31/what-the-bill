@@ -18,7 +18,7 @@ export default function HomePage() {
         </header>
 
         <div className={styles.map}>
-          <CityMap />
+          <CityMap apiKey={process.env.API_KEY} />
         </div>
 
         <LocationSearch />
