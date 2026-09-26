@@ -46,8 +46,11 @@ export default function CityExplorer({ apiKey }: { apiKey?: string }) {
 
   return (
     <>
-      <div className={expanded ? `${styles.map} ${styles.mapExpanded}` : styles.map}>
-        <CityMap apiKey={apiKey} location={location} expanded={expanded} onClose={close} />
+      <div className={styles.section}>
+        <p className={styles.label}>Your city</p>
+        <div className={expanded ? `${styles.map} ${styles.mapExpanded}` : styles.map}>
+          <CityMap apiKey={apiKey} location={location} expanded={expanded} onClose={close} />
+        </div>
       </div>
 
       <LocationSearch

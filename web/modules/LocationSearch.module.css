@@ -1,52 +1,87 @@
 .form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Code-comment style label: "// your location" */
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: lowercase;
+  color: var(--label);
+}
+
+.label::before {
+  content: "// ";
+}
+
+/* Anchors the prompt, the arrow button and the suggestions panel to the input */
+.field {
   position: relative;
 }
 
+/* Red "$" prompt at the start of the input */
+.field::before {
+  content: "$";
+  position: absolute;
+  left: 14px;
+  top: 24px;
+  transform: translateY(-50%);
+  z-index: 1;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--red);
+  pointer-events: none;
+}
+
+/* Dark terminal input */
 .input {
   width: 100%;
-  height: 52px;
-  padding: 0 56px 0 18px;
+  height: 48px;
+  padding: 0 56px 0 32px;
   font: inherit;
-  font-size: 16px;
-  color: var(--text);
-  background: var(--field);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: var(--radius-field);
+  font-size: 15px;
+  color: var(--control-text);
+  caret-color: var(--label);
+  background: var(--control);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
   outline: none;
-  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .input::placeholder {
-  color: var(--text-faint);
+  color: var(--control-placeholder);
 }
 
 .input:hover {
-  border-color: rgba(255, 255, 255, 0.42);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .input:focus {
-  border-color: rgba(255, 255, 255, 0.85);
-  background: #181818;
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+  border-color: var(--label);
+  box-shadow: 0 0 0 3px rgba(124, 196, 171, 0.18);
 }
 
 .submit {
   position: absolute;
   top: 6px;
   right: 6px;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 9px;
-  background: #f4f4f4;
-  color: #151515;
+  border-radius: 3px;
+  background: var(--red);
+  color: var(--white);
   cursor: pointer;
   opacity: 0;
   transform: scale(0.85);
   pointer-events: none;
-  transition: opacity 150ms ease, transform 150ms ease;
+  transition: opacity 150ms ease, transform 150ms ease, background 150ms ease;
 }
 
 .submit[data-visible="true"] {
@@ -56,11 +91,11 @@
 }
 
 .submit:hover {
-  background: #ffffff;
+  background: var(--red-dark);
 }
 
 .submit:focus-visible {
-  outline: 2px solid #ffffff;
+  outline: 2px solid var(--label);
   outline-offset: 2px;
 }
 
@@ -70,12 +105,13 @@
 }
 
 .error {
-  margin: 8px 2px 0;
+  margin: 0 2px;
   font-size: 13px;
   line-height: 1.4;
   color: var(--text-muted);
 }
 
+/* Suggestions: a dark panel like the rest of the terminal */
 .suggestions {
   position: absolute;
   top: calc(100% + 6px);
@@ -83,10 +119,10 @@
   right: 0;
   z-index: 20;
   padding: 6px;
-  background: var(--field);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: var(--radius-field);
-  box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.6);
+  background: var(--panel-bar);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.7);
   text-align: left;
   overflow-y: auto;
 }
@@ -104,7 +140,7 @@
 
 .suggestion {
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: 3px;
   font-size: 14px;
   line-height: 1.35;
   color: var(--text);
@@ -112,7 +148,8 @@
 }
 
 .suggestion[data-active="true"] {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 2px 0 0 var(--red);
 }
 
 .suggestionStatus {
@@ -124,10 +161,10 @@
 
 .attribution {
   margin: 2px 0 0;
-  padding: 4px 12px 2px;
+  padding: 6px 12px 2px;
   font-size: 11px;
   color: var(--text-faint);
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px dashed var(--panel-line);
 }
 
 .attribution a {

@@ -1,0 +1,133 @@
+/* Ottawa riverfront, 3840x2160 so it stays sharp on large and retina screens.
+   Landmarks sit in the outer 30% on each side, so the card never covers them. */
+   .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    background: #d9e7f0;
+  }
+  
+  /* The whole scene drifts in and out very slowly */
+  .image {
+    position: absolute;
+    inset: 0;
+    background: url("/skyline.jpg") center 60% / cover no-repeat;
+    animation: drift 40s ease-in-out infinite alternate;
+  }
+  
+  @keyframes drift {
+    from {
+      transform: scale(1);
+    }
+    to {
+      transform: scale(1.04) translateY(-0.6%);
+    }
+  }
+  
+  /* Flat clouds crossing the sky at different heights and speeds */
+  .cloud {
+    position: absolute;
+    left: 0;
+    height: auto;
+    opacity: 0.85;
+    animation: cross linear infinite;
+    will-change: transform;
+  }
+  
+  .cloudA {
+    top: 7%;
+    width: 220px;
+    animation-duration: 110s;
+    animation-delay: -20s;
+  }
+  
+  .cloudB {
+    top: 15%;
+    width: 150px;
+    opacity: 0.7;
+    animation-duration: 150s;
+    animation-delay: -95s;
+  }
+  
+  .cloudC {
+    top: 4%;
+    width: 120px;
+    opacity: 0.6;
+    animation-duration: 170s;
+    animation-delay: -60s;
+  }
+  
+  .cloudD {
+    top: 20%;
+    width: 190px;
+    opacity: 0.75;
+    animation-duration: 130s;
+    animation-delay: -5s;
+  }
+  
+  @keyframes cross {
+    from {
+      transform: translateX(-260px);
+    }
+    to {
+      transform: translateX(calc(100vw + 40px));
+    }
+  }
+  
+  /* Light glinting on the river: short bright dashes that slide sideways */
+  .shimmer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 34%;
+    background: repeating-linear-gradient(
+      180deg,
+      transparent 0 9px,
+      rgba(255, 255, 255, 0.22) 9px 10px
+    );
+    -webkit-mask-image: repeating-linear-gradient(
+      90deg,
+      transparent 0 70px,
+      #000 70px 110px,
+      transparent 110px 230px
+    );
+    mask-image: repeating-linear-gradient(
+      90deg,
+      transparent 0 70px,
+      #000 70px 110px,
+      transparent 110px 230px
+    );
+    -webkit-mask-size: 230px 100%;
+    mask-size: 230px 100%;
+    animation: glint 14s linear infinite;
+    opacity: 0.7;
+  }
+  
+  @keyframes glint {
+    from {
+      -webkit-mask-position: 0 0;
+      mask-position: 0 0;
+    }
+    to {
+      -webkit-mask-position: 230px 0;
+      mask-position: 230px 0;
+    }
+  }
+/* Dark tint over the whole scene so the terminal card stands out */
+.scrim {
+    position: absolute;
+    inset: 0;
+    background: rgba(6, 12, 18, 0.5);
+  }  
+  @media (prefers-reduced-motion: reduce) {
+    .image,
+    .cloud,
+    .shimmer {
+      animation: none;
+    }
+    .cloud {
+      display: none;
+    }
+  }

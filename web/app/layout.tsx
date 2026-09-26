@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import "@fontsource/bai-jamjuree/400.css";
-import "@fontsource/bai-jamjuree/500.css";
-import "@fontsource/bai-jamjuree/600.css";
-import "@fontsource/bai-jamjuree/700.css";
+import "@fontsource/archivo/700.css";
+import "@fontsource/archivo/800.css";
+import "@fontsource/ibm-plex-sans/400.css";
+import "@fontsource/ibm-plex-sans/500.css";
+import "@fontsource/ibm-plex-sans/600.css";
 import "@/modules/globals.css";
 
 export const metadata: Metadata = {
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#232323",
+  themeColor: "#0b1117",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

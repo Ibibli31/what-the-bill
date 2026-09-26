@@ -1,22 +1,46 @@
 :root {
-  --font-sans: "Bai Jamjuree";
+  /* Type: bold display headings over a clean sans body */
+  --font-display: "Archivo", system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
 
-  /* Surfaces */
-  --card: #232323;
-  --card-edge: rgba(255, 255, 255, 0.07);
-  --field: #1c1c1c;
+  /* Accents */
+  --red: #d52b1e;          /* the flag */
+  --red-dark: #b3241a;
+  --copper: #7cc4ab;       /* Parliament's copper roofs */
+  --white: #ffffff;
+
+  /* Terminal window */
+  --panel: #0b1117;
+  --panel-bar: #101820;
+  --panel-line: rgba(255, 255, 255, 0.12);
+  --panel-border: rgba(255, 255, 255, 0.14);
 
   /* Text */
-  --text: #f4f4f4;
-  --text-muted: #b9b9b9;
-  --text-faint: #9a9a9a;
+  --text: var(--white);
+  --text-muted: #b8c4cc;
+  --text-faint: #8a98a3;
+  --label: var(--copper);
+
+  /* Dark input with a light border */
+  --control: #070b0f;
+  --control-border: rgba(255, 255, 255, 0.18);
+  --control-text: var(--white);
+  --control-placeholder: rgba(255, 255, 255, 0.4);
 
   /* Map */
-  --map-bg: #2a2a2a;
+  --map-bg: #111b23;
+  --map-frame: rgba(255, 255, 255, 0.25);
 
-  --radius-card: 24px;
-  --radius-inner: 16px;
-  --radius-field: 12px;
+  --radius-panel: 8px;
+  --radius-inner: 4px;
+  --radius-control: 4px;
+
+  /* Older names still used by the map toolbar; kept so nothing breaks */
+  --card: var(--panel);
+  --card-edge: var(--panel-border);
+  --field: var(--panel);
+  --radius-card: var(--radius-panel);
+  --radius-field: var(--radius-control);
 }
 
 * {
@@ -31,11 +55,17 @@ body {
 }
 
 body {
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-sans);
   color: var(--text);
-  background: #c7c8cc;
+  background: #111b23;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Form controls don't inherit the page font by default */
+button,
+input {
+  font-family: inherit;
 }
 
 .visually-hidden {

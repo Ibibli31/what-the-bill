@@ -156,91 +156,93 @@ export default function LocationSearch({
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} role="search" aria-busy={busy}>
-      <label htmlFor="location" className="visually-hidden">
-        Enter your location
+      <label htmlFor="location" className={styles.label}>
+        Your location
       </label>
-      <input
-        ref={inputRef}
-        id="location"
-        className={styles.input}
-        type="text"
-        inputMode="search"
-        autoComplete="off"
-        placeholder="Enter your location"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onFocus={() => setOpen(suggestions.length > 0)}
-        onBlur={() => setOpen(false)}
-        role="combobox"
-        aria-autocomplete="list"
-        aria-expanded={showPanel}
-        aria-controls="location-suggestions"
-        aria-activedescendant={
-          showPanel && activeIndex >= 0 ? `location-suggestion-${activeIndex}` : undefined
-        }
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? "location-error" : undefined}
-      />
-      <button
-        type="submit"
-        className={styles.submit}
-        aria-label="Find my representatives"
-        data-visible={hasValue}
-        tabIndex={hasValue ? 0 : -1}
-        disabled={busy}
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path
-            d="M5 12h14M13 6l6 6-6 6"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
-
-      {showPanel && (
-        // Keep focus in the input when the list is clicked, so the pick registers before blur.
-        <div
-          className={styles.suggestions}
-          data-placement={placement.above ? "above" : "below"}
-          style={{ maxHeight: placement.maxHeight }}
-          onMouseDown={(e) => e.preventDefault()}
+      <div className={styles.field}>
+        <input
+          ref={inputRef}
+          id="location"
+          className={styles.input}
+          type="text"
+          inputMode="search"
+          autoComplete="off"
+          placeholder="Enter your location"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setOpen(suggestions.length > 0)}
+          onBlur={() => setOpen(false)}
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={showPanel}
+          aria-controls="location-suggestions"
+          aria-activedescendant={
+            showPanel && activeIndex >= 0 ? `location-suggestion-${activeIndex}` : undefined
+          }
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? "location-error" : undefined}
+        />
+        <button
+          type="submit"
+          className={styles.submit}
+          aria-label="Find my representatives"
+          data-visible={hasValue}
+          tabIndex={hasValue ? 0 : -1}
+          disabled={busy}
         >
-          {suggestions.length > 0 && (
-            <ul id="location-suggestions" role="listbox" className={styles.suggestionList}>
-              {suggestions.map((suggestion, i) => (
-                <li
-                  key={suggestion.displayName}
-                  id={`location-suggestion-${i}`}
-                  role="option"
-                  aria-selected={i === activeIndex}
-                  className={styles.suggestion}
-                  data-active={i === activeIndex}
-                  onMouseEnter={() => setActiveIndex(i)}
-                  onClick={() => pick(suggestion)}
-                >
-                  {suggestion.displayName}
-                </li>
-              ))}
-            </ul>
-          )}
-          {statusText && (
-            <p className={styles.suggestionStatus} role="status">
-              {statusText}
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M5 12h14M13 6l6 6-6 6"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+
+        {showPanel && (
+          // Keep focus in the input when the list is clicked, so the pick registers before blur.
+          <div
+            className={styles.suggestions}
+            data-placement={placement.above ? "above" : "below"}
+            style={{ maxHeight: placement.maxHeight }}
+            onMouseDown={(e) => e.preventDefault()}
+          >
+            {suggestions.length > 0 && (
+              <ul id="location-suggestions" role="listbox" className={styles.suggestionList}>
+                {suggestions.map((suggestion, i) => (
+                  <li
+                    key={suggestion.displayName}
+                    id={`location-suggestion-${i}`}
+                    role="option"
+                    aria-selected={i === activeIndex}
+                    className={styles.suggestion}
+                    data-active={i === activeIndex}
+                    onMouseEnter={() => setActiveIndex(i)}
+                    onClick={() => pick(suggestion)}
+                  >
+                    {suggestion.displayName}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {statusText && (
+              <p className={styles.suggestionStatus} role="status">
+                {statusText}
+              </p>
+            )}
+            <p className={styles.attribution}>
+              Suggestions ©{" "}
+              <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+                OpenStreetMap
+              </a>{" "}
+              contributors
             </p>
-          )}
-          <p className={styles.attribution}>
-            Suggestions ©{" "}
-            <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
-              OpenStreetMap
-            </a>{" "}
-            contributors
-          </p>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       {error && (
         <p id="location-error" className={styles.error} role="alert">

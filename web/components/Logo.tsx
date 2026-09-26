@@ -1,51 +1,54 @@
+import styles from "@/modules/Logo.module.css";
+
 type LogoProps = { className?: string };
 
+/** Line drawing of Parliament's Centre Block: the Peace Tower, the main block and corner towers. */
 export default function Logo({ className }: LogoProps) {
   return (
     <svg
       className={className}
-      viewBox="0 0 120 96"
+      viewBox="0 0 160 124"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.2"
+      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
       role="img"
-      aria-label="What The Bill logo"
+      aria-label="What The Bill logo: the Parliament of Canada"
     >
-      {/* Flag */}
-      <path d="M60 18V4" />
-      <path d="M60 4h8l-2 3 2 3h-8" />
+      {/* Flagpole and a waving red-white-red flag */}
+      <path d="M80 16V2" />
+      <g className={styles.flag}>
+        <rect x="80.5" y="2" width="4" height="8" fill="var(--red)" stroke="none" />
+        <rect x="84.5" y="2" width="6" height="8" fill="#ffffff" stroke="none" />
+        <rect x="90.5" y="2" width="4" height="8" fill="var(--red)" stroke="none" />
+      </g>
 
-      {/* Central tower */}
-      <path d="M52 36 60 18l8 18" />
-      <path d="M53 36h14v52H53z" />
-      <circle cx="60" cy="45" r="3.2" />
-      <path d="M57.5 88v-9a2.5 2.5 0 0 1 5 0v9" />
-      <path d="M57 56v6M63 56v6" />
+      {/* Peace Tower */}
+      <path d="M74 38 80 16l6 22" />
+      <path d="M72.5 38h15v4h-15z" />
+      <path d="M72 38l1.2-7 1.2 7M85.6 38l1.2-7 1.2 7" />
+      <path d="M74 42v74M86 42v74" />
+      <circle cx="80" cy="51" r="3.6" />
+      <path d="M80 51v-2M80 51h1.8" />
+      <path d="M77.5 60v9M82.5 60v9M77.5 74v8M82.5 74v8" />
+      <path d="M76.5 116v-7a3.5 3.5 0 0 1 7 0v7" />
 
-      {/* Wings */}
-      <path d="M53 88H37V66l8-8 8 8" />
-      <path d="M67 88h16V66l-8-8-8 8" />
-      <path d="M41 72v4M45 72v4M49 72v4M41 80v4M45 80v4M49 80v4" />
-      <path d="M71 72v4M75 72v4M79 72v4M71 80v4M75 80v4M79 80v4" />
+      {/* Centre Block */}
+      <path d="M36 84l6-7h32M86 77h32l6 7" />
+      <path d="M36 84h38M86 84h38" />
+      <path d="M36 84v32M124 84v32" />
+      <path d="M48 77l1.5-6 1.5 6M59 77l1.5-6 1.5 6M99 77l1.5-6 1.5 6M110 77l1.5-6 1.5 6" />
+      <path d="M42 91v7M48 91v7M54 91v7M60 91v7M66 91v7M94 91v7M100 91v7M106 91v7M112 91v7M118 91v7" />
+      <path d="M42 104v7M48 104v7M54 104v7M60 104v7M66 104v7M94 104v7M100 104v7M106 104v7M112 104v7M118 104v7" />
 
-      {/* Speakers */}
-      <path d="M40 50 47 44l3 4-7 6z" />
-      <path d="M40 50l-3 3 3 3 3-2" />
-      <path d="M80 50 73 44l-3 4 7 6z" />
-      <path d="M80 50l3 3-3 3-3-2" />
+      {/* Corner towers */}
+      <path d="M26 116V72h10v44M124 116V72h10v44" />
+      <path d="M25 72l6-16 6 16M123 72l6-16 6 16" />
+      <path d="M31 56v-5M129 56v-5" />
 
       {/* Ground */}
-      <path d="M30 88h60" />
-
-      {/* Broadcast waves */}
-      <path d="M31 56a28 28 0 0 1 8-20" />
-      <path d="M24 58a36 36 0 0 1 10-26" />
-      <path d="M17 60a44 44 0 0 1 12-32" />
-      <path d="M89 56a28 28 0 0 0-8-20" />
-      <path d="M96 58a36 36 0 0 0-10-26" />
-      <path d="M103 60a44 44 0 0 0-12-32" />
+      <path d="M16 116h128" />
     </svg>
   );
 }

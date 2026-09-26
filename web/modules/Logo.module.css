@@ -1,0 +1,25 @@
+/* The flag ripples gently from the pole outward. */
+.flag {
+    transform-box: fill-box;
+    transform-origin: left center;
+    animation: wave 3.2s ease-in-out infinite;
+  }
+  
+  @keyframes wave {
+    0%,
+    100% {
+      transform: skewY(0deg) scaleX(1);
+    }
+    30% {
+      transform: skewY(-7deg) scaleX(0.94);
+    }
+    65% {
+      transform: skewY(5deg) scaleX(0.98);
+    }
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    .flag {
+      animation: none;
+    }
+  }

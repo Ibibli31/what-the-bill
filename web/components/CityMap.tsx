@@ -11,22 +11,22 @@ import type { GeocodedLocation } from "@/services/geocoding";
 import styles from "@/modules/CityMap.module.css";
 
 const MAP_STYLES = [
-  { elementType: "geometry", stylers: [{ color: "#2a2a2a" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#bdbdbd" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#2a2a2a" }] },
+  { elementType: "geometry", stylers: [{ color: "#111b23" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#b9c9d2" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#111b23" }] },
   { featureType: "administrative", elementType: "geometry", stylers: [{ visibility: "off" }] },
   { featureType: "poi", stylers: [{ visibility: "off" }] },
   {
     featureType: "poi.park",
     elementType: "geometry",
-    stylers: [{ visibility: "on" }, { color: "#303030" }],
+    stylers: [{ visibility: "on" }, { color: "#16261f" }],
   },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: "#5a5a5a" }] },
-  { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#6e6e6e" }] },
-  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#8a8a8a" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#243441" }] },
+  { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#314352" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#6f808c" }] },
   { featureType: "road", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
   { featureType: "transit", stylers: [{ visibility: "off" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#4b4b4b" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#0a1218" }] },
 ];
 
 type CityMapProps = {
