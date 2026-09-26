@@ -121,6 +121,7 @@ export default function CityExplorer({
           expanded={expanded}
           onOpen={() => setExpanded(true)}
           ward={ward ? `${ward.number} · ${ward.name}` : WARD_STATUS_LABEL[wardStatus]}
+          wardNumber={ward?.number}
           representatives={{ municipal: councillor }}
           bills={bills ?? []}
           billsError={bills === null}
