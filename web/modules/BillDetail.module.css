@@ -135,6 +135,17 @@
     color: var(--copper);
   }
   
+  .tag[data-status="Open"] {
+    background: #e3efe9;
+    border-color: #e3efe9;
+    color: #1f6b52;
+  }
+  
+  .tag[data-status="Closed"] {
+    border-style: dashed;
+    color: var(--text-faint);
+  }
+  
   .tag[data-status="Defeated"] {
     border-style: dashed;
     color: var(--text-faint);
@@ -193,6 +204,54 @@
     border: 0;
     border-left: 3px solid var(--copper);
     border-radius: var(--radius-inner);
+  }
+  
+  /* Kind-specific facts: address, application type, closing date */
+  .facts {
+    margin: 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px 16px;
+    padding: 14px 16px;
+    border-radius: var(--radius-inner);
+    background: var(--panel-bar);
+    font-size: 14px;
+  }
+  
+  .facts dt {
+    color: var(--text-faint);
+  }
+  
+  .facts dd {
+    margin: 0;
+    font-weight: 500;
+    color: var(--text);
+  }
+  
+  /* The main thing to do next: give feedback, comment on an application */
+  .action {
+    align-self: stretch;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 14px;
+    background: var(--red);
+    color: var(--white);
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 150ms ease;
+  }
+  
+  .action:hover {
+    background: var(--red-dark);
+  }
+  
+  .action:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
   }
   
   /* Vote */

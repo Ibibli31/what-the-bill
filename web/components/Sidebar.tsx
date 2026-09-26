@@ -2,7 +2,17 @@
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import BillDetail, { RepDetail } from "@/components/BillDetail";
-import { BILL_STATUSES, TOPICS, VOTE_LABEL, type Bill, type BillStatus, type Level } from "@/lib/bill";
+import {
+  BILL_STATUSES,
+  KIND_LABELS,
+  SOON_LABEL,
+  TOPICS,
+  VOTE_LABEL,
+  type Bill,
+  type BillStatus,
+  type ItemKind,
+  type Level,
+} from "@/lib/bill";
 import type { GeocodedLocation } from "@/services/geocoding";
 import styles from "@/modules/Sidebar.module.css";
 
@@ -41,6 +51,8 @@ const SORTS: { id: SortOrder; label: string }[] = [
   { id: "lobbied", label: "Most lobbied" },
 ];
 
+/** Council mixes three kinds of item; these chips pick one. Order is the chip order. */
+const MUNICIPAL_KINDS: ItemKind[] = ["motion", "consultation", "devApp"];
 
 export const DEFAULT_FILTERS: Filters = {
   level: "municipal",
@@ -109,6 +121,7 @@ export default function Sidebar({
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [query, setQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [kind, setKind] = useState<ItemKind | "all">("all");
   const [selected, setSelected] = useState<Selection>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [snap, setSnap] = useState<Snap>("half");
@@ -127,6 +140,7 @@ export default function Sidebar({
   if (location !== prevLocation) {
     setPrevLocation(location);
     setSelected(null);
+    setKind("all");
     setCollapsed(false);
     setSnap("half");
   }
@@ -186,16 +200,42 @@ export default function Sidebar({
     [bills, filters.level, wardNumber, districtCode]
   );
 
-  const visible = useMemo(() => {
+  const municipal = filters.level === "municipal";
+
+  // Everything but the kind chips, so each chip can show how many it would leave.
+  const matches = useMemo(() => {
     const words = query.trim().toLowerCase();
-    const matches = levelBills.filter(
+    return levelBills.filter(
       (bill) =>
         (filters.statuses.length === 0 || filters.statuses.includes(bill.status)) &&
         (filters.topics.length === 0 || bill.topics.some((t) => filters.topics.includes(t))) &&
-        (!words || `${bill.number} ${bill.title} ${bill.officialTitle} ${bill.summary ?? ""}`.toLowerCase().includes(words))
+        (!words ||
+          `${bill.number} ${bill.title} ${bill.officialTitle} ${bill.summary ?? ""} ${bill.facts.map((f) => f.value).join(" ")}`
+            .toLowerCase()
+            .includes(words))
     );
-    return sortBills(matches, filters.sort);
-  }, [levelBills, filters, query]);
+  }, [levelBills, filters.statuses, filters.topics, query]);
+
+  const kindCounts = useMemo(() => {
+    const counts: Partial<Record<ItemKind, number>> = {};
+    for (const bill of matches) counts[bill.kind] = (counts[bill.kind] ?? 0) + 1;
+    return counts;
+  }, [matches]);
+
+  const visible = useMemo(
+    () =>
+      sortBills(
+        municipal && kind !== "all" ? matches.filter((bill) => bill.kind === kind) : matches,
+        filters.sort
+      ),
+    [matches, municipal, kind, filters.sort]
+  );
+
+  // Only offer statuses this level actually uses (consultations are Open/Closed, bills never are).
+  const statusOptions = useMemo(
+    () => BILL_STATUSES.filter((status) => levelBills.some((bill) => bill.status === status)),
+    [levelBills]
+  );
 
   const activeCount =
     filters.statuses.length + filters.topics.length + (filters.sort === "recent" ? 0 : 1);
@@ -293,7 +333,9 @@ export default function Sidebar({
                 type="button"
                 aria-pressed={filters.level === item.id}
                 onClick={() => {
-                  update("level", item.id);
+                  // Statuses differ between levels, so a status filter doesn't carry over.
+                  setFilters((current) => ({ ...current, level: item.id, statuses: [] }));
+                  setKind("all");
                   setSelected((current) => (current?.kind === "rep" ? current : null));
                 }}
               >
@@ -330,7 +372,7 @@ export default function Sidebar({
               id="bill-search"
               type="search"
               className={styles.search}
-              placeholder="Search bills"
+              placeholder={municipal ? "Search motions, consultations, addresses" : "Search bills"}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
@@ -357,14 +399,14 @@ export default function Sidebar({
                   aria-checked={filters.sort === item.id}
                   onClick={() => update("sort", item.id)}
                 >
-                  {item.label}
+                  {item.id === "vote" && municipal ? "Coming up soon" : item.label}
                 </button>
               ))}
             </div>
 
             <p className={styles.label}>Status</p>
             <div className={styles.chips} role="group" aria-label="Status">
-              {BILL_STATUSES.map((status) => (
+              {statusOptions.map((status) => (
                 <button
                   key={status}
                   type="button"
@@ -429,11 +471,33 @@ export default function Sidebar({
         </div>
 
         <div className={styles.listHead}>
-          <p className={styles.label}>Bills</p>
+          <p className={styles.label}>{municipal ? "What’s happening" : "Bills"}</p>
           <span>
             {visible.length} result{visible.length === 1 ? "" : "s"}
           </span>
         </div>
+
+        {municipal && (
+          <div className={styles.kinds} role="radiogroup" aria-label="Type of item">
+            {(["all", ...MUNICIPAL_KINDS] as const).map((id) => {
+              const count = id === "all" ? matches.length : kindCounts[id] ?? 0;
+              if (id !== "all" && count === 0 && kind !== id) return null;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="radio"
+                  className={styles.kind}
+                  aria-checked={kind === id}
+                  onClick={() => setKind(id)}
+                >
+                  {id === "all" ? "All" : KIND_LABELS[id].many}
+                  <span>{count}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <ul className={styles.list}>
           {visible.map((bill) => (
@@ -446,11 +510,11 @@ export default function Sidebar({
               >
                 <span className={styles.rowTop}>
                   <span className={styles.number}>{bill.number}</span>
-                  <span className={styles.status} data-status={bill.status}>
-                    {bill.status}
+                  <span className={styles.status} data-status={bill.status} title={bill.statusLabel}>
+                    {bill.statusLabel}
                   </span>
                   {bill.voteSoon && bill.status !== "Passed" && bill.status !== "Defeated" && (
-                    <span className={styles.soon}>Vote soon</span>
+                    <span className={styles.soon}>{SOON_LABEL[bill.kind]}</span>
                   )}
                 </span>
                 <span className={styles.rowTitle}>{filters.textStyle === "plain" ? bill.title : bill.officialTitle}</span>
@@ -466,8 +530,8 @@ export default function Sidebar({
           {visible.length === 0 && (
             <li className={styles.empty}>
               {billsError
-                ? "We couldn't load bills right now. Please try again later."
-                : "No bills match. Try clearing a filter."}
+                ? `We couldn't load ${municipal ? "council items" : "bills"} right now. Please try again later.`
+                : `Nothing matches. Try clearing a filter${municipal && kind !== "all" ? " or choosing All" : ""}.`}
             </li>
           )}
         </ul>

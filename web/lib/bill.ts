@@ -1,5 +1,15 @@
 export type Level = "municipal" | "provincial" | "federal";
-export type BillStatus = "Introduced" | "In committee" | "In progress" | "Passed" | "Defeated";
+/** What an item is. Provincial and federal items are always bills; council has three kinds. */
+export type ItemKind = "bill" | "motion" | "devApp" | "consultation";
+/** Shared vocabulary for the Status filter; `statusLabel` holds each source's own wording. */
+export type BillStatus =
+  | "Introduced"
+  | "In committee"
+  | "In progress"
+  | "Passed"
+  | "Defeated"
+  | "Open"
+  | "Closed";
 /** "none" = no recorded vote on this bill; "paired"/"absent" = the member didn't vote. */
 export type Vote = "yes" | "no" | "paired" | "absent" | "none";
 
@@ -17,7 +27,24 @@ export const BILL_STATUSES: BillStatus[] = [
   "In progress",
   "Passed",
   "Defeated",
+  "Open",
+  "Closed",
 ];
+
+export const KIND_LABELS: Record<ItemKind, { one: string; many: string }> = {
+  bill: { one: "Bill", many: "Bills" },
+  motion: { one: "Motion", many: "Motions" },
+  consultation: { one: "Consultation", many: "Consultations" },
+  devApp: { one: "Development", many: "Development" },
+};
+
+/** The "soon" badge: a vote for bills and motions, a deadline for the rest. */
+export const SOON_LABEL: Record<ItemKind, string> = {
+  bill: "Vote soon",
+  motion: "Vote soon",
+  consultation: "Closing soon",
+  devApp: "Comments open",
+};
 
 /** The closed tag vocabulary used by `topic_tags` / `tags` in the database. */
 export const TOPICS = [
@@ -34,6 +61,7 @@ export const TOPICS = [
 
 export type Bill = {
   id: string;
+  kind: ItemKind;
   number: string;
   level: Level;
   /** Ward number for site-specific council items; null means city-wide. */
@@ -43,6 +71,10 @@ export type Bill = {
   /** Title as published (the committee name for council motions). */
   officialTitle: string;
   status: BillStatus;
+  /** Status as the source words it, e.g. "Carried", "Open until Oct 12", "Notice of Decision". */
+  statusLabel: string;
+  /** Kind-specific facts for the details panel, e.g. address and application type. */
+  facts: { label: string; value: string }[];
   topics: string[];
   /** ISO date of the last activity, used for "Most recent". Empty if unknown. */
   updated: string;

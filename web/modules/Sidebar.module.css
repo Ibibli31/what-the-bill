@@ -327,6 +327,69 @@
     color: var(--text-faint);
   }
   
+  /* Type chips for council items: All / Motions / Consultations / Development */
+  .kinds {
+    /* The panel is a scrolling flex column; don't let a long list squash the chips. */
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 4px 20px 10px;
+  }
+  
+  .kind {
+    flex: none;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 12px 0 14px;
+    border: 1px solid var(--control-border);
+    border-radius: 999px;
+    background: var(--panel);
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+  }
+  
+  .kind span {
+    min-width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--control);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  
+  .kind:hover {
+    border-color: rgba(19, 32, 43, 0.3);
+    color: var(--text);
+  }
+  
+  .kind[aria-checked="true"] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--white);
+  }
+  
+  .kind[aria-checked="true"] span {
+    background: rgba(255, 255, 255, 0.18);
+    color: var(--white);
+  }
+  
+  .kind:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+  
   .list {
     margin: 0;
     padding: 0 8px 12px;
@@ -388,8 +451,23 @@
   }
   
   .status {
+    max-width: 220px;
     border: 1px solid var(--control-border);
     color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .status[data-status="Open"] {
+    background: #e3efe9;
+    border-color: #e3efe9;
+    color: #1f6b52;
+  }
+  
+  .status[data-status="Closed"] {
+    border-style: dashed;
+    color: var(--text-faint);
   }
   
   .status[data-status="In committee"] {

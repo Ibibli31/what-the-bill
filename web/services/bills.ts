@@ -87,6 +87,31 @@ const CONSULTATION_STAGES = ["Open for feedback", "Feedback closed", "Report to 
 
 const CHAMBER = { house: "House of Commons", senate: "Senate" } as const;
 
+/** "2026-10-12" → "Oct 12, 2026". Dates are calendar days, so format them in UTC. */
+function formatDate(iso: string) {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-CA", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+/** Council's own wording for where a motion stands. */
+function motionLabel(row: MotionRow) {
+  const atCouncil = row.meetings.committee_name === "City Council";
+  switch (row.result) {
+    case "carried":
+      return atCouncil ? "Carried" : "Carried at committee";
+    case "lost":
+      return "Lost";
+    case "notice":
+      return "Notice of motion";
+    default:
+      return atCouncil ? "On Council's agenda" : "At committee";
+  }
+}
+
 /** Maps LEGISinfo's status_name (e.g. "At second reading in the Senate") onto our stages. */
 function federalProgress(row: FederalRow): Progress {
   const status = row.status_name.toLowerCase();
@@ -189,6 +214,7 @@ function toFederal(row: FederalRow, ridingCodes: string[]): Bill {
   const otherChamber = row.origin_chamber === "house" ? "Senate" : "House of Commons";
   return {
     id: `f-${row.bill_id}`,
+    kind: "bill",
     number: `Bill ${row.number_code}`,
     level: "federal",
     wardNumber: null,
@@ -196,6 +222,8 @@ function toFederal(row: FederalRow, ridingCodes: string[]): Bill {
     title: row.plain_title ?? row.title,
     officialTitle: row.title,
     status,
+    statusLabel: status,
+    facts: [],
     topics,
     updated: row.last_activity_date ?? "",
     relevance: relevance(topics, row.sponsor_mp_id !== null, row.last_activity_date),
@@ -222,6 +250,7 @@ function toProvincial(row: ProvincialRow): Bill {
   const { status, reached } = provincialProgress(row.current_stage);
   return {
     id: `p-${row.bill_id}`,
+    kind: "bill",
     number: `Bill ${row.bill_number}`,
     level: "provincial",
     votesByRiding: null,
@@ -230,6 +259,8 @@ function toProvincial(row: ProvincialRow): Bill {
     title: row.plain_title ?? row.title,
     officialTitle: row.title,
     status,
+    statusLabel: status,
+    facts: [],
     topics,
     updated: row.last_activity_date ?? "",
     relevance: relevance(topics, row.sponsor_mpp_id !== null, row.last_activity_date),
@@ -250,6 +281,7 @@ function toMotion(row: MotionRow, today: string): Bill {
   const meeting = row.meetings;
   return {
     id: `m-${row.motion_id}`,
+    kind: "motion",
     number: `Motion ${row.motion_number}`,
     level: "municipal",
     votesByRiding: null,
@@ -258,6 +290,13 @@ function toMotion(row: MotionRow, today: string): Bill {
     title: row.plain_title ?? meeting.committee_name,
     officialTitle: meeting.committee_name,
     status,
+    statusLabel: motionLabel(row),
+    facts: [
+      { label: "Meeting", value: `${meeting.committee_name}, ${formatDate(meeting.meeting_date)}` },
+      ...(meeting.speak_by_date && meeting.speak_by_date >= today
+        ? [{ label: "Register to speak by", value: formatDate(meeting.speak_by_date) }]
+        : []),
+    ],
     topics,
     updated: meeting.meeting_date,
     relevance: Math.min(100, relevance(topics, true, meeting.meeting_date) + (row.wards ? 10 : 0)),
@@ -278,7 +317,8 @@ function toDevApp(row: DevAppRow): Bill {
   const officialTitle = `${row.application_type} – ${row.address ?? "City-wide"}`;
   return {
     id: `d-${row.app_id}`,
-    number: row.file_number,
+    kind: "devApp",
+    number: `Application ${row.file_number}`,
     level: "municipal",
     votesByRiding: null,
     latestVote: null,
@@ -286,6 +326,13 @@ function toDevApp(row: DevAppRow): Bill {
     title: row.plain_title ?? officialTitle,
     officialTitle,
     status,
+    statusLabel: row.status,
+    facts: [
+      ...(row.address ? [{ label: "Address", value: row.address }] : []),
+      { label: "Application type", value: row.application_type },
+      { label: "File number", value: row.file_number },
+      ...(row.last_activity_date ? [{ label: "Last update", value: formatDate(row.last_activity_date) }] : []),
+    ],
     topics,
     updated: row.last_activity_date ?? "",
     relevance: Math.min(100, relevance(topics, true, row.last_activity_date) + (row.wards ? 10 : 0)),
@@ -304,6 +351,7 @@ function toConsultation(row: ConsultationRow, today: string): Bill {
   const open = row.closing_date === null || row.closing_date >= today;
   return {
     id: `c-${row.consultation_id}`,
+    kind: "consultation",
     number: "Consultation",
     level: "municipal",
     votesByRiding: null,
@@ -311,7 +359,22 @@ function toConsultation(row: ConsultationRow, today: string): Bill {
     wardNumber: row.is_citywide ? null : row.wards?.ward_number ?? null,
     title: row.plain_title ?? row.title,
     officialTitle: row.title,
-    status: open ? "In progress" : "In committee",
+    status: open ? "Open" : "Closed",
+    statusLabel: open
+      ? row.closing_date
+        ? `Open until ${formatDate(row.closing_date).replace(/, \d{4}$/, "")}`
+        : "Open"
+      : "Closed",
+    facts: [
+      {
+        label: open ? "Closes" : "Closed",
+        value: row.closing_date ? formatDate(row.closing_date) : "No closing date set",
+      },
+      {
+        label: "Who it affects",
+        value: row.is_citywide || !row.wards ? "The whole city" : `Ward ${row.wards.ward_number}`,
+      },
+    ],
     topics: [],
     updated: row.closing_date ?? "",
     relevance: Math.min(100, relevance([], true, row.closing_date) + (row.wards ? 10 : 0)),

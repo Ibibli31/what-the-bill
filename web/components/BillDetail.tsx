@@ -1,10 +1,25 @@
 "use client";
 
-import { VOTE_LABEL, type Bill, type Vote } from "@/lib/bill";
+import { VOTE_LABEL, type Bill, type ItemKind, type Vote } from "@/lib/bill";
 import type { Representative, TextStyle } from "@/components/Sidebar";
 import styles from "@/modules/BillDetail.module.css";
 
 type Role = { role: string; short: string; label: string };
+
+/** Per-kind wording: what the summary is called and where the source link goes. */
+const COPY: Record<ItemKind, { about: string; source: string }> = {
+  bill: { about: "What it does", source: "Read the official text" },
+  motion: { about: "What it does", source: "View the meeting record" },
+  consultation: { about: "What it’s about", source: "View the consultation" },
+  devApp: { about: "What’s proposed", source: "View the application" },
+};
+
+/** The one thing to do next, when there is one. Opens the same page as the source link. */
+function nextAction(bill: Bill) {
+  if (bill.kind === "consultation" && bill.status === "Open") return "Give feedback";
+  if (bill.kind === "devApp" && bill.voteSoon) return "Comment on this application";
+  return null;
+}
 
 function voteNote(vote: Vote, bill: Bill) {
   const on = bill.latestVote ? ` on ${bill.latestVote.label.toLowerCase()} (${bill.latestVote.date})` : "";
@@ -54,6 +69,9 @@ export default function BillDetail({
   const totalMeetings = bill.lobbying.reduce((sum, item) => sum + item.meetings, 0);
   const maxMeetings = Math.max(1, ...bill.lobbying.map((item) => item.meetings));
   const summary = textStyle === "plain" ? bill.summary : bill.officialSummary;
+  // Votes and lobbying are recorded for bills and council motions only.
+  const legislative = bill.kind === "bill" || bill.kind === "motion";
+  const action = nextAction(bill);
 
   return (
     <>
@@ -61,7 +79,7 @@ export default function BillDetail({
       <div className={styles.body}>
         <div className={styles.tags}>
           <span className={styles.tag} data-status={bill.status}>
-            {bill.status}
+            {bill.statusLabel}
           </span>
           {bill.topics.map((topic) => (
             <span key={topic} className={styles.topic}>
@@ -74,20 +92,42 @@ export default function BillDetail({
         {textStyle === "plain" && bill.officialTitle !== bill.title && (
           <p className={styles.updated}>Official title: {bill.officialTitle}</p>
         )}
-        {bill.updated && <p className={styles.updated}>Last activity {bill.updated}</p>}
+        {bill.kind === "bill" && bill.updated && <p className={styles.updated}>Last activity {bill.updated}</p>}
 
-        <section className={styles.section}>
-          <p className={styles.label}>{textStyle === "plain" ? "What it does" : "Official summary"}</p>
-          {summary ? (
-            <p className={styles.text}>{summary}</p>
-          ) : (
-            <p className={styles.muted}>
-              {textStyle === "plain"
-                ? "A plain-English summary isn't ready yet. See the official text below."
-                : "See the official text below."}
-            </p>
-          )}
-        </section>
+        {bill.facts.length > 0 && (
+          <dl className={styles.facts}>
+            {bill.facts.map((fact) => (
+              <div key={fact.label} style={{ display: "contents" }}>
+                <dt>{fact.label}</dt>
+                <dd>{fact.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+
+        {action && (
+          <a className={styles.action} href={bill.sourceUrl} target="_blank" rel="noreferrer">
+            {action}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </a>
+        )}
+
+        {(legislative || summary) && (
+          <section className={styles.section}>
+            <p className={styles.label}>{textStyle === "plain" ? COPY[bill.kind].about : "Official summary"}</p>
+            {summary ? (
+              <p className={styles.text}>{summary}</p>
+            ) : (
+              <p className={styles.muted}>
+                {textStyle === "plain"
+                  ? "A plain-English summary isn't ready yet. See the official text below."
+                  : "See the official text below."}
+              </p>
+            )}
+          </section>
+        )}
 
         {bill.impact && (
           <section className={`${styles.section} ${styles.impact}`}>
@@ -96,19 +136,21 @@ export default function BillDetail({
           </section>
         )}
 
-        <section className={styles.section}>
-          <p className={styles.label}>How {role.short === "CLR" ? "your councillor" : `your ${role.short}`} voted</p>
-          {bill.repVote ? (
-            <div className={styles.vote}>
-              <b data-vote={bill.repVote}>{VOTE_LABEL[bill.repVote]}</b>
-              <span>{voteNote(bill.repVote, bill)}</span>
-            </div>
-          ) : (
-            <p className={styles.muted}>
-              {bill.votesByRiding ? "Shows once your riding is found." : "Voting records for this level aren't loaded yet."}
-            </p>
-          )}
-        </section>
+        {legislative && (
+          <section className={styles.section}>
+            <p className={styles.label}>How {role.short === "CLR" ? "your councillor" : `your ${role.short}`} voted</p>
+            {bill.repVote ? (
+              <div className={styles.vote}>
+                <b data-vote={bill.repVote}>{VOTE_LABEL[bill.repVote]}</b>
+                <span>{voteNote(bill.repVote, bill)}</span>
+              </div>
+            ) : (
+              <p className={styles.muted}>
+                {bill.votesByRiding ? "Shows once your riding is found." : "Voting records for this level aren't loaded yet."}
+              </p>
+            )}
+          </section>
+        )}
 
         <section className={styles.section}>
           <p className={styles.label}>Progress</p>
@@ -124,30 +166,35 @@ export default function BillDetail({
           </ol>
         </section>
 
-        <section className={styles.section}>
-          <p className={styles.label}>
-            Lobbying · {totalMeetings} meeting{totalMeetings === 1 ? "" : "s"}
-          </p>
-          {bill.lobbying.length === 0 ? (
-            <p className={styles.muted}>No registered lobbying on this yet.</p>
-          ) : (
-            <ul className={styles.lobby}>
-              {bill.lobbying.map((item) => (
-                <li key={item.group}>
-                  <span className={styles.lobbyName}>{item.group}</span>
-                  <span className={styles.bar} aria-hidden="true">
-                    <i style={{ width: `${(item.meetings / maxMeetings) * 100}%` }} />
-                  </span>
-                  <span className={styles.lobbyCount}>{item.meetings}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        {legislative && (
+          <section className={styles.section}>
+            <p className={styles.label}>
+              Lobbying · {totalMeetings} meeting{totalMeetings === 1 ? "" : "s"}
+            </p>
+            {bill.lobbying.length === 0 ? (
+              <p className={styles.muted}>No registered lobbying on this yet.</p>
+            ) : (
+              <ul className={styles.lobby}>
+                {bill.lobbying.map((item) => (
+                  <li key={item.group}>
+                    <span className={styles.lobbyName}>{item.group}</span>
+                    <span className={styles.bar} aria-hidden="true">
+                      <i style={{ width: `${(item.meetings / maxMeetings) * 100}%` }} />
+                    </span>
+                    <span className={styles.lobbyCount}>{item.meetings}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
 
-        <a className={styles.source} href={bill.sourceUrl} target="_blank" rel="noreferrer">
-          Read the official text
-        </a>
+        {/* The action button already links to the source. */}
+        {!action && (
+          <a className={styles.source} href={bill.sourceUrl} target="_blank" rel="noreferrer">
+            {COPY[bill.kind].source}
+          </a>
+        )}
       </div>
     </>
   );
