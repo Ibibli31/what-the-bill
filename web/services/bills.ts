@@ -30,6 +30,7 @@ type MotionRow = {
   motion_number: string;
   summary: string;
   tags: string[] | null;
+  wards: { ward_number: number } | null;
   result: "carried" | "lost" | "notice" | null;
   meetings: {
     committee_name: string;
@@ -120,6 +121,7 @@ function toFederal(row: FederalRow): Bill {
     id: `f-${row.bill_id}`,
     number: `Bill ${row.number_code}`,
     level: "federal",
+    wardNumber: null,
     title: row.title,
     status,
     topics,
@@ -150,6 +152,7 @@ function toProvincial(row: ProvincialRow): Bill {
     id: `p-${row.bill_id}`,
     number: `Bill ${row.bill_number}`,
     level: "provincial",
+    wardNumber: null,
     title: row.title,
     status,
     topics,
@@ -174,11 +177,12 @@ function toMotion(row: MotionRow, today: string): Bill {
     id: `m-${row.motion_id}`,
     number: `Motion ${row.motion_number}`,
     level: "municipal",
+    wardNumber: row.wards?.ward_number ?? null,
     title: meeting.committee_name,
     status,
     topics,
     updated: meeting.meeting_date,
-    relevance: relevance(topics, true, meeting.meeting_date),
+    relevance: Math.min(100, relevance(topics, true, meeting.meeting_date) + (row.wards ? 10 : 0)),
     voteSoon: meeting.meeting_date >= today || (meeting.speak_by_date ?? "") >= today,
     summary: row.summary,
     officialSummary: null,
@@ -207,7 +211,7 @@ export async function getBills(): Promise<Bill[]> {
     ),
     select<MotionRow>(
       "motions",
-      "select=motion_id,motion_number,summary,tags,result,meetings(committee_name,meeting_date,speak_by_date,source_url)"
+      "select=motion_id,motion_number,summary,tags,result,wards(ward_number),meetings(committee_name,meeting_date,speak_by_date,source_url)"
     ),
   ]);
 

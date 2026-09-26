@@ -63,6 +63,8 @@ type SidebarProps = {
   onOpen?: () => void;
   /** Filled in once the ward/riding lookup exists. */
   ward?: string;
+  /** The address's ward. Until it's known, only city-wide council items show. */
+  wardNumber?: number;
   representatives?: Partial<Record<Level, Representative>>;
   bills: Bill[];
   /** True when the bills couldn't be loaded from the database. */
@@ -97,6 +99,7 @@ export default function Sidebar({
   expanded,
   onOpen,
   ward,
+  wardNumber,
   representatives = {},
   bills,
   billsError = false,
@@ -167,8 +170,13 @@ export default function Sidebar({
   const rep = representatives[filters.level];
 
   const levelBills = useMemo(
-    () => bills.filter((bill) => bill.level === filters.level),
-    [bills, filters.level]
+    () =>
+      bills.filter(
+        (bill) =>
+          bill.level === filters.level &&
+          (bill.wardNumber === null || bill.wardNumber === wardNumber)
+      ),
+    [bills, filters.level, wardNumber]
   );
 
   const visible = useMemo(() => {

@@ -27,6 +27,8 @@ export type Bill = {
   id: string;
   number: string;
   level: Level;
+  /** Ward number for site-specific council items; null means city-wide. */
+  wardNumber: number | null;
   title: string;
   status: BillStatus;
   topics: string[];
