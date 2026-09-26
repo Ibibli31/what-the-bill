@@ -6,6 +6,7 @@ export type Member = {
   name: string;
   party: string | null;
   email: string | null;
+  phone: string | null;
 };
 
 export type Riding = {

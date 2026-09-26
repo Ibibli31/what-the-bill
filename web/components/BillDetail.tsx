@@ -276,6 +276,62 @@ export default function BillDetail({
   );
 }
 
+function telHref(phone: string) {
+  return `tel:${phone.replace(/[^\d+]/g, "")}`;
+}
+
+function PhoneIcon() {
+  return (
+    <svg className={styles.contactIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg className={styles.contactIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2" />
+      <path d="m3 7 9 6 9-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** Copies the address to paste into webmail; mailto: does nothing without a desktop mail app. */
+function CopyButton({ text, label }: { text: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  return (
+    <button
+      type="button"
+      className={styles.source}
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+        } catch {
+          // Clipboard blocked (e.g. insecure context); the address is still shown to select by hand.
+        }
+      }}
+    >
+      <MailIcon />
+      <span aria-live="polite">{copied ? "Email address copied" : label}</span>
+    </button>
+  );
+}
+
 export function RepDetail({
   role,
   rep,
@@ -314,12 +370,27 @@ export function RepDetail({
         {(rep?.email || rep?.phone) && (
           <section className={styles.section}>
             <p className={styles.label}>Contact</p>
-            {rep.phone && <p className={styles.text}>{rep.phone}</p>}
-            {rep.email && (
-              <a className={styles.source} href={`mailto:${rep.email}`}>
-                Email {rep.name}
+            {rep.phone && (
+              <a className={styles.contactLine} href={telHref(rep.phone)}>
+                <PhoneIcon />
+                {rep.phone}
               </a>
             )}
+            {rep.email && (
+              <a className={styles.contactLine} href={`mailto:${rep.email}`}>
+                <MailIcon />
+                {rep.email}
+              </a>
+            )}
+            <div className={styles.contactActions}>
+              {rep.phone && (
+                <a className={styles.source} href={telHref(rep.phone)}>
+                  <PhoneIcon />
+                  Call {rep.name}
+                </a>
+              )}
+              {rep.email && <CopyButton text={rep.email} label={`Email ${rep.name}`} />}
+            </div>
           </section>
         )}
 

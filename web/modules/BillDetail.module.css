@@ -475,9 +475,10 @@
     font-size: 14px;
     font-weight: 600;
     text-decoration: none;
+    cursor: pointer;
     transition: background 150ms ease;
   }
-  
+
   .source:hover {
     background: var(--ink-hover);
   }
@@ -487,6 +488,38 @@
     outline-offset: 2px;
   }
   
+  .contactLine {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+    font-size: 15px;
+    overflow-wrap: anywhere;
+    text-decoration: underline;
+    text-decoration-color: var(--control-border);
+    text-underline-offset: 3px;
+  }
+
+  .contactIcon {
+    flex: none;
+  }
+
+  .contactLine .contactIcon {
+    color: var(--text-muted);
+  }
+
+  .contactActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .contactActions .source {
+    gap: 8px;
+  }
+
   /* Representative */
   .repHead {
     display: flex;
