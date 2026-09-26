@@ -1,12 +1,24 @@
 "use client";
 
-import type { Bill } from "@/lib/bill";
+import { VOTE_LABEL, type Bill, type Vote } from "@/lib/bill";
 import type { Representative, TextStyle } from "@/components/Sidebar";
 import styles from "@/modules/BillDetail.module.css";
 
 type Role = { role: string; short: string; label: string };
 
-const VOTE_LABEL = { yes: "Yes", no: "No", none: "No vote yet" } as const;
+function voteNote(vote: Vote, bill: Bill) {
+  const on = bill.latestVote ? ` on ${bill.latestVote.label.toLowerCase()} (${bill.latestVote.date})` : "";
+  switch (vote) {
+    case "none":
+      return "No recorded vote on this bill. Many bills pass stages without one.";
+    case "paired":
+      return `Paired${on}: agreed with a member on the other side that neither would vote.`;
+    case "absent":
+      return `Didn't vote in the recorded division${on}.`;
+    default:
+      return `Recorded division${on}.`;
+  }
+}
 
 function Titlebar({ title, onClose }: { title: string; onClose: () => void }) {
   return (
@@ -81,14 +93,12 @@ export default function BillDetail({
           {bill.repVote ? (
             <div className={styles.vote}>
               <b data-vote={bill.repVote}>{VOTE_LABEL[bill.repVote]}</b>
-              <span>
-                {bill.repVote === "none"
-                  ? "This hasn't come to a vote yet."
-                  : `Recorded vote at ${bill.status === "Passed" || bill.status === "Defeated" ? "the final" : "the latest"} stage.`}
-              </span>
+              <span>{voteNote(bill.repVote, bill)}</span>
             </div>
           ) : (
-            <p className={styles.muted}>Shows once the ward lookup is connected.</p>
+            <p className={styles.muted}>
+              {bill.votesByRiding ? "Shows once your riding is found." : "Voting records for this level aren't loaded yet."}
+            </p>
           )}
         </section>
 
@@ -150,6 +160,7 @@ export function RepDetail({
 }) {
   const voted = bills.filter((bill) => bill.repVote && bill.repVote !== "none");
   const yes = voted.filter((bill) => bill.repVote === "yes").length;
+  const no = voted.filter((bill) => bill.repVote === "no").length;
 
   return (
     <>
@@ -191,7 +202,7 @@ export function RepDetail({
             <span>voted yes</span>
           </div>
           <div>
-            <b>{voted.length - yes}</b>
+            <b>{no}</b>
             <span>voted no</span>
           </div>
         </div>

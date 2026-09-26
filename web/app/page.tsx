@@ -41,7 +41,7 @@ export default async function HomePage() {
           <p className={styles.tagline}>Your city. Your government. In plain English.</p>
         </header>
 
-        <CityExplorer apiKey={process.env.API_KEY} bills={bills} />
+        <CityExplorer bills={bills} />
 
         <p className={styles.footer}>
           <span>Status: ready</span>

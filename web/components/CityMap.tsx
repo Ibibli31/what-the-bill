@@ -1,56 +1,41 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  OTTAWA,
-  loadMaps,
-  type LatLng,
-  type MapInstance,
-  type MarkerInstance,
-  type PolygonInstance,
-} from "@/lib/googleMaps";
+import type { CircleMarker, GeoJSON as GeoJSONLayer, Map as LeafletMap } from "leaflet";
+import "leaflet/dist/leaflet.css";
 import type { GeocodedLocation } from "@/services/geocoding";
 import type { WardBoundary } from "@/services/ward";
 import styles from "@/modules/CityMap.module.css";
 
-const MAP_STYLES = [
-  { elementType: "geometry", stylers: [{ color: "#111b23" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#b9c9d2" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#111b23" }] },
-  { featureType: "administrative", elementType: "geometry", stylers: [{ visibility: "off" }] },
-  { featureType: "poi", stylers: [{ visibility: "off" }] },
-  {
-    featureType: "poi.park",
-    elementType: "geometry",
-    stylers: [{ visibility: "on" }, { color: "#16261f" }],
-  },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: "#243441" }] },
-  { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#314352" }] },
-  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#6f808c" }] },
-  { featureType: "road", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-  { featureType: "transit", stylers: [{ visibility: "off" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#0a1218" }] },
-];
+const OTTAWA: [number, number] = [45.4215, -75.6972];
+
+// OpenStreetMap's own tiles: no API key or account. Attribution is required, and
+// the tile usage policy (https://operations.osmfoundation.org/policies/tiles/)
+// asks for light use only. The dark look is a CSS filter in CityMap.module.css.
+const TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 const WARD_OUTLINE = {
-  strokeColor: "#d52b1e",
-  strokeOpacity: 0.9,
-  strokeWeight: 2,
+  color: "#d52b1e",
+  opacity: 0.9,
+  weight: 2,
   fillColor: "#d52b1e",
   fillOpacity: 0.08,
-  clickable: false,
+  interactive: false,
 };
 
-/** Converts GeoJSON [lng, lat] rings into Google Maps paths. */
-function toPaths(boundary: WardBoundary): LatLng[][] {
-  const polygons = boundary.type === "Polygon" ? [boundary.coordinates] : boundary.coordinates;
-  return polygons.flatMap((rings) =>
-    rings.map((ring) => ring.map(([lng, lat]) => ({ lat, lng })))
-  );
-}
+const PIN = {
+  radius: 8,
+  color: "#ffffff",
+  weight: 2,
+  fillColor: "#d52b1e",
+  fillOpacity: 1,
+};
+
+type Leaflet = typeof import("leaflet");
 
 type CityMapProps = {
-  apiKey?: string;
   location?: GeocodedLocation | null;
   boundary?: WardBoundary | null;
   expanded?: boolean;
@@ -58,85 +43,90 @@ type CityMapProps = {
 };
 
 export default function CityMap({
-  apiKey,
   location = null,
   boundary = null,
   expanded = false,
   onClose,
 }: CityMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<MapInstance | null>(null);
-  const markerRef = useRef<MarkerInstance | null>(null);
-  const polygonRef = useRef<PolygonInstance | null>(null);
+  const leafletRef = useRef<Leaflet | null>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
+  const markerRef = useRef<CircleMarker | null>(null);
+  const outlineRef = useRef<GeoJSONLayer | null>(null);
   const [ready, setReady] = useState(false);
-  const [error, setError] = useState<string | null>(
-    apiKey ? null : "Map unavailable: API_KEY is not set in .env."
-  );
+  const [error, setError] = useState<string | null>(null);
 
+  // Leaflet touches `window` when imported, so load it in the browser only.
   useEffect(() => {
-    if (!apiKey || !containerRef.current) return;
     let cancelled = false;
+    let map: LeafletMap | null = null;
 
-    window.gm_authFailure = () => {
-      if (!cancelled) setError("Google Maps rejected the API key.");
-    };
-
-    loadMaps(apiKey)
-      .then((maps) => {
+    import("leaflet")
+      .then((L) => {
         if (cancelled || !containerRef.current) return;
-        mapRef.current = new maps.Map(containerRef.current, {
+        leafletRef.current = L;
+        map = L.map(containerRef.current, {
           center: OTTAWA,
           zoom: 13,
-          styles: MAP_STYLES,
-          disableDefaultUI: true,
-          zoomControl: true,
-          backgroundColor: "#2a2a2a",
-          clickableIcons: false,
-          gestureHandling: "cooperative",
+          scrollWheelZoom: false,
+          attributionControl: true,
         });
-        markerRef.current = new maps.Marker({ map: null });
-        polygonRef.current = new maps.Polygon({ ...WARD_OUTLINE, map: null });
+        L.tileLayer(TILES, {
+          attribution: ATTRIBUTION,
+          maxZoom: 19,
+        }).addTo(map);
+        mapRef.current = map;
         setReady(true);
       })
       .catch((err: Error) => {
-        if (!cancelled) setError(err.message);
+        console.error("Map failed to load:", err);
+        if (!cancelled) setError("Map unavailable right now.");
       });
 
     return () => {
       cancelled = true;
+      map?.remove();
+      mapRef.current = null;
+      markerRef.current = null;
+      outlineRef.current = null;
     };
-  }, [apiKey]);
+  }, []);
 
   useEffect(() => {
     const map = mapRef.current;
-    const marker = markerRef.current;
-    if (!ready || !map || !marker) return;
+    const L = leafletRef.current;
+    if (!ready || !map || !L) return;
 
-    map.setOptions({ gestureHandling: expanded ? "greedy" : "cooperative" });
+    // Small map: let the page scroll past it. Full screen: all gestures.
+    if (expanded) {
+      map.scrollWheelZoom.enable();
+      map.dragging.enable();
+    } else {
+      map.scrollWheelZoom.disable();
+      if (L.Browser.mobile) map.dragging.disable();
+    }
 
-    if (!location) return;
-    const position = { lat: location.lat, lng: location.lon };
-    marker.setPosition(position);
-    marker.setTitle(location.displayName);
-    marker.setMap(map);
     // Wait a frame so the map has picked up its new size before re-centring.
     const frame = requestAnimationFrame(() => {
-      map.setCenter(position);
-      map.setZoom(expanded ? 17 : 15);
+      map.invalidateSize();
+      if (!location) return;
+      const position: [number, number] = [location.lat, location.lon];
+      if (markerRef.current) markerRef.current.setLatLng(position);
+      else markerRef.current = L.circleMarker(position, PIN).addTo(map);
+      markerRef.current.bindTooltip(location.displayName);
+      map.setView(position, expanded ? 17 : 15);
     });
     return () => cancelAnimationFrame(frame);
   }, [ready, location, expanded]);
 
   useEffect(() => {
     const map = mapRef.current;
-    const polygon = polygonRef.current;
-    if (!ready || !map || !polygon) return;
-    if (!boundary) {
-      polygon.setMap(null);
-      return;
-    }
-    polygon.setPaths(toPaths(boundary));
-    polygon.setMap(map);
+    const L = leafletRef.current;
+    if (!ready || !map || !L) return;
+    outlineRef.current?.remove();
+    outlineRef.current = boundary ? L.geoJSON(boundary, { style: WARD_OUTLINE }).addTo(map) : null;
+    // Keep the pin on top of the outline.
+    markerRef.current?.bringToFront();
   }, [ready, boundary]);
 
   useEffect(() => {

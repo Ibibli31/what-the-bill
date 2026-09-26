@@ -7,6 +7,39 @@
 .canvas {
   position: absolute;
   inset: 0;
+  /* Leaflet's panes use z-indexes up to 1000; keep them below the toolbar and sidebar. */
+  z-index: 0;
+}
+
+.canvas:global(.leaflet-container) {
+  background: #111b23;
+  font: inherit;
+}
+
+/* OSM tiles are light; invert them to match the dark theme. Only the tiles, so
+   the red ward outline and pin keep their colour. */
+.canvas :global(.leaflet-tile-pane) {
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.35);
+}
+
+.canvas :global(.leaflet-control-attribution) {
+  background: rgba(17, 27, 35, 0.8);
+  color: var(--text-faint);
+  font-size: 10px;
+}
+
+.canvas :global(.leaflet-control-attribution a) {
+  color: inherit;
+}
+
+.canvas :global(.leaflet-bar a) {
+  background: var(--panel);
+  border-bottom-color: rgba(255, 255, 255, 0.15);
+  color: var(--white);
+}
+
+.canvas :global(.leaflet-bar a:hover) {
+  background: var(--card);
 }
 
 .message {
