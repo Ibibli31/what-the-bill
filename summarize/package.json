@@ -1,0 +1,12 @@
+{
+  "name": "what-the-bill-summarize",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "titles": "node --env-file=../.env plain-titles.mjs"
+  },
+  "dependencies": {
+    "@google/genai": "^1.0.0"
+  }
+}

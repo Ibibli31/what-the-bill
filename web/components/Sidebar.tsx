@@ -35,8 +35,8 @@ export const LEVELS: { id: Level; label: string; role: string; short: string }[]
 ];
 
 const SORTS: { id: SortOrder; label: string }[] = [
-  { id: "affects", label: "Affects me most" },
   { id: "recent", label: "Most recent" },
+  { id: "affects", label: "Affects me most" },
   { id: "vote", label: "Vote coming up" },
   { id: "lobbied", label: "Most lobbied" },
 ];
@@ -44,7 +44,7 @@ const SORTS: { id: SortOrder; label: string }[] = [
 
 export const DEFAULT_FILTERS: Filters = {
   level: "municipal",
-  sort: "affects",
+  sort: "recent",
   statuses: [],
   topics: [],
   textStyle: "plain",
@@ -192,13 +192,13 @@ export default function Sidebar({
       (bill) =>
         (filters.statuses.length === 0 || filters.statuses.includes(bill.status)) &&
         (filters.topics.length === 0 || bill.topics.some((t) => filters.topics.includes(t))) &&
-        (!words || `${bill.number} ${bill.title} ${bill.summary ?? ""}`.toLowerCase().includes(words))
+        (!words || `${bill.number} ${bill.title} ${bill.officialTitle} ${bill.summary ?? ""}`.toLowerCase().includes(words))
     );
     return sortBills(matches, filters.sort);
   }, [levelBills, filters, query]);
 
   const activeCount =
-    filters.statuses.length + filters.topics.length + (filters.sort === "affects" ? 0 : 1);
+    filters.statuses.length + filters.topics.length + (filters.sort === "recent" ? 0 : 1);
   const selectedBill =
     selected?.kind === "bill" ? levelBills.find((bill) => bill.id === selected.id) ?? null : null;
 
@@ -453,12 +453,7 @@ export default function Sidebar({
                     <span className={styles.soon}>Vote soon</span>
                   )}
                 </span>
-                <span className={styles.rowTitle}>{bill.title}</span>
-                {(filters.textStyle === "plain" ? bill.summary : bill.officialSummary) && (
-                  <span className={styles.rowSummary}>
-                    {filters.textStyle === "plain" ? bill.summary : bill.officialSummary}
-                  </span>
-                )}
+                <span className={styles.rowTitle}>{filters.textStyle === "plain" ? bill.title : bill.officialTitle}</span>
                 {bill.repVote && bill.repVote !== "none" && (
                   <span className={styles.rowVote}>
                     {level.short} {bill.repVote === "yes" || bill.repVote === "no" ? "voted " : ""}

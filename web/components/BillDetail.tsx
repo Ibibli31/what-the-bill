@@ -70,7 +70,10 @@ export default function BillDetail({
           ))}
         </div>
 
-        <h2 className={styles.title}>{bill.title}</h2>
+        <h2 className={styles.title}>{textStyle === "plain" ? bill.title : bill.officialTitle}</h2>
+        {textStyle === "plain" && bill.officialTitle !== bill.title && (
+          <p className={styles.updated}>Official title: {bill.officialTitle}</p>
+        )}
         {bill.updated && <p className={styles.updated}>Last activity {bill.updated}</p>}
 
         <section className={styles.section}>
