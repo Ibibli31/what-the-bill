@@ -38,7 +38,10 @@ export type Bill = {
   level: Level;
   /** Ward number for site-specific council items; null means city-wide. */
   wardNumber: number | null;
+  /** Plain-language title, falling back to the official one until it is generated. */
   title: string;
+  /** Title as published (the committee name for council motions). */
+  officialTitle: string;
   status: BillStatus;
   topics: string[];
   /** ISO date of the last activity, used for "Most recent". Empty if unknown. */

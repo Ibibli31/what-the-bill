@@ -5,6 +5,7 @@ type FederalRow = {
   bill_id: number;
   number_code: string;
   title: string;
+  plain_title: string | null;
   status_name: string;
   origin_chamber: "house" | "senate";
   sponsor_mp_id: number | null;
@@ -27,6 +28,7 @@ type ProvincialRow = {
   bill_id: number;
   bill_number: string;
   title: string;
+  plain_title: string | null;
   sponsor_mpp_id: number | null;
   current_stage: string;
   last_activity_date: string | null;
@@ -38,6 +40,7 @@ type MotionRow = {
   motion_id: number;
   motion_number: string;
   summary: string;
+  plain_title: string | null;
   tags: string[] | null;
   wards: { ward_number: number } | null;
   result: "carried" | "lost" | "notice" | null;
@@ -49,6 +52,28 @@ type MotionRow = {
   };
 };
 
+type DevAppRow = {
+  app_id: number;
+  file_number: string;
+  address: string | null;
+  application_type: string;
+  status: string;
+  last_activity_date: string | null;
+  plain_title: string | null;
+  source_url: string;
+  wards: { ward_number: number } | null;
+};
+
+type ConsultationRow = {
+  consultation_id: number;
+  title: string;
+  plain_title: string | null;
+  closing_date: string | null;
+  is_citywide: boolean;
+  source_url: string;
+  wards: { ward_number: number } | null;
+};
+
 type Progress = { status: BillStatus; reached: number };
 
 const stages = (reached: number, labels: string[]) =>
@@ -56,6 +81,9 @@ const stages = (reached: number, labels: string[]) =>
 
 const PROVINCIAL_STAGES = ["Introduced", "Second reading", "Committee", "Third reading", "Royal assent"];
 const COUNCIL_STAGES = ["Proposed", "Committee", "Council vote", "In effect"];
+
+const DEV_APP_STAGES = ["Filed", "Under review", "Decision", "In effect"];
+const CONSULTATION_STAGES = ["Open for feedback", "Feedback closed", "Report to Council"];
 
 const CHAMBER = { house: "House of Commons", senate: "Senate" } as const;
 
@@ -107,6 +135,19 @@ function motionProgress(row: MotionRow): Progress {
   }
 }
 
+/** Maps a development application's City status text onto our stages. */
+function devAppProgress(status: string): Progress {
+  const s = status.toLowerCase();
+  if (["in effect", "by-law passed", "approved", "adopted"].some((word) => s.includes(word))) {
+    return { status: "Passed", reached: s.includes("in effect") ? 4 : 3 };
+  }
+  if (s.includes("notice of decision") || s.includes("appeal period")) {
+    return { status: "In progress", reached: 3 };
+  }
+  if (s.includes("file pending") || s.includes("reactivated")) return { status: "Introduced", reached: 1 };
+  return { status: "In progress", reached: 2 };
+}
+
 /** Tags other than "Other" mean the item touches daily Ottawa life. */
 function meaningfulTopics(tags: string[] | null) {
   return (tags ?? []).filter((tag) => tag !== "Other");
@@ -152,7 +193,8 @@ function toFederal(row: FederalRow, ridingCodes: string[]): Bill {
     level: "federal",
     wardNumber: null,
     ...federalVotes(row, ridingCodes),
-    title: row.title,
+    title: row.plain_title ?? row.title,
+    officialTitle: row.title,
     status,
     topics,
     updated: row.last_activity_date ?? "",
@@ -185,7 +227,8 @@ function toProvincial(row: ProvincialRow): Bill {
     votesByRiding: null,
     latestVote: null,
     wardNumber: null,
-    title: row.title,
+    title: row.plain_title ?? row.title,
+    officialTitle: row.title,
     status,
     topics,
     updated: row.last_activity_date ?? "",
@@ -212,7 +255,8 @@ function toMotion(row: MotionRow, today: string): Bill {
     votesByRiding: null,
     latestVote: null,
     wardNumber: row.wards?.ward_number ?? null,
-    title: meeting.committee_name,
+    title: row.plain_title ?? meeting.committee_name,
+    officialTitle: meeting.committee_name,
     status,
     topics,
     updated: meeting.meeting_date,
@@ -228,24 +272,86 @@ function toMotion(row: MotionRow, today: string): Bill {
   };
 }
 
+function toDevApp(row: DevAppRow): Bill {
+  const topics = ["Housing & Development"];
+  const { status, reached } = devAppProgress(row.status);
+  const officialTitle = `${row.application_type} – ${row.address ?? "City-wide"}`;
+  return {
+    id: `d-${row.app_id}`,
+    number: row.file_number,
+    level: "municipal",
+    votesByRiding: null,
+    latestVote: null,
+    wardNumber: row.wards?.ward_number ?? null,
+    title: row.plain_title ?? officialTitle,
+    officialTitle,
+    status,
+    topics,
+    updated: row.last_activity_date ?? "",
+    relevance: Math.min(100, relevance(topics, true, row.last_activity_date) + (row.wards ? 10 : 0)),
+    voteSoon: row.status.toLowerCase().includes("comment period in progress"),
+    summary: null,
+    officialSummary: null,
+    impact: null,
+    repVote: null,
+    lobbying: [],
+    stages: stages(reached, DEV_APP_STAGES),
+    sourceUrl: row.source_url,
+  };
+}
+
+function toConsultation(row: ConsultationRow, today: string): Bill {
+  const open = row.closing_date === null || row.closing_date >= today;
+  return {
+    id: `c-${row.consultation_id}`,
+    number: "Consultation",
+    level: "municipal",
+    votesByRiding: null,
+    latestVote: null,
+    wardNumber: row.is_citywide ? null : row.wards?.ward_number ?? null,
+    title: row.plain_title ?? row.title,
+    officialTitle: row.title,
+    status: open ? "In progress" : "In committee",
+    topics: [],
+    updated: row.closing_date ?? "",
+    relevance: Math.min(100, relevance([], true, row.closing_date) + (row.wards ? 10 : 0)),
+    voteSoon: open && row.closing_date !== null,
+    summary: null,
+    officialSummary: null,
+    impact: null,
+    repVote: null,
+    lobbying: [],
+    stages: stages(open ? 1 : 2, CONSULTATION_STAGES),
+    sourceUrl: row.source_url,
+  };
+}
+
 /**
- * All current bills and motions, newest data from Supabase.
+ * All current bills, council motions, development applications and consultations from Supabase.
  * Items tagged only "Other" are dropped unless an Ottawa MP/MPP sponsored them
  * (see db/schema.md, "Preset topics").
  */
 export async function getBills(): Promise<Bill[]> {
-  const [federal, provincial, motions, mps] = await Promise.all([
+  const [federal, provincial, motions, devApps, consultations, mps] = await Promise.all([
     select<FederalRow>(
       "federal_bills",
-      "select=bill_id,number_code,title,status_name,origin_chamber,sponsor_mp_id,last_activity_date,topic_tags,source_url,federal_votes(division_number,vote_label,vote_date,federal_ballots(ballot,mps(ridings(code))))"
+      "select=bill_id,number_code,title,plain_title,status_name,origin_chamber,sponsor_mp_id,last_activity_date,topic_tags,source_url,federal_votes(division_number,vote_label,vote_date,federal_ballots(ballot,mps(ridings(code))))"
     ),
     select<ProvincialRow>(
       "provincial_bills",
-      "select=bill_id,bill_number,title,sponsor_mpp_id,current_stage,last_activity_date,topic_tags,source_url"
+      "select=bill_id,bill_number,title,plain_title,sponsor_mpp_id,current_stage,last_activity_date,topic_tags,source_url"
     ),
     select<MotionRow>(
       "motions",
-      "select=motion_id,motion_number,summary,tags,result,wards(ward_number),meetings(committee_name,meeting_date,speak_by_date,source_url)"
+      "select=motion_id,motion_number,summary,plain_title,tags,result,wards(ward_number),meetings(committee_name,meeting_date,speak_by_date,source_url)"
+    ),
+    select<DevAppRow>(
+      "dev_apps",
+      "select=app_id,file_number,address,application_type,status,last_activity_date,plain_title,source_url,wards(ward_number)"
+    ),
+    select<ConsultationRow>(
+      "consultations",
+      "select=consultation_id,title,plain_title,closing_date,is_citywide,source_url,wards(ward_number)"
     ),
     select<MpRow>("mps", "select=ridings(code)"),
   ]);
@@ -253,6 +359,8 @@ export async function getBills(): Promise<Bill[]> {
 
   const today = new Date().toISOString().slice(0, 10);
   return [
+    ...devApps.map(toDevApp),
+    ...consultations.map((row) => toConsultation(row, today)),
     ...motions.filter((row) => meaningfulTopics(row.tags).length > 0).map((row) => toMotion(row, today)),
     ...provincial
       .filter((row) => meaningfulTopics(row.topic_tags).length > 0 || row.sponsor_mpp_id !== null)
