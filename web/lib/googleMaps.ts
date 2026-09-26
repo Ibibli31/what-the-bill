@@ -13,9 +13,15 @@ export type MarkerInstance = {
   setMap(map: MapInstance | null): void;
 };
 
+export type PolygonInstance = {
+  setPaths(paths: LatLng[][]): void;
+  setMap(map: MapInstance | null): void;
+};
+
 export type MapsApi = {
   Map: new (el: HTMLElement, options: Record<string, unknown>) => MapInstance;
   Marker: new (options: Record<string, unknown>) => MarkerInstance;
+  Polygon: new (options: Record<string, unknown>) => PolygonInstance;
 };
 
 declare global {

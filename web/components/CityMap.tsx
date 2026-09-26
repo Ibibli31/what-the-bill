@@ -4,10 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import {
   OTTAWA,
   loadMaps,
+  type LatLng,
   type MapInstance,
   type MarkerInstance,
+  type PolygonInstance,
 } from "@/lib/googleMaps";
 import type { GeocodedLocation } from "@/services/geocoding";
+import type { WardBoundary } from "@/services/ward";
 import styles from "@/modules/CityMap.module.css";
 
 const MAP_STYLES = [
@@ -29,9 +32,27 @@ const MAP_STYLES = [
   { featureType: "water", elementType: "geometry", stylers: [{ color: "#0a1218" }] },
 ];
 
+const WARD_OUTLINE = {
+  strokeColor: "#d52b1e",
+  strokeOpacity: 0.9,
+  strokeWeight: 2,
+  fillColor: "#d52b1e",
+  fillOpacity: 0.08,
+  clickable: false,
+};
+
+/** Converts GeoJSON [lng, lat] rings into Google Maps paths. */
+function toPaths(boundary: WardBoundary): LatLng[][] {
+  const polygons = boundary.type === "Polygon" ? [boundary.coordinates] : boundary.coordinates;
+  return polygons.flatMap((rings) =>
+    rings.map((ring) => ring.map(([lng, lat]) => ({ lat, lng })))
+  );
+}
+
 type CityMapProps = {
   apiKey?: string;
   location?: GeocodedLocation | null;
+  boundary?: WardBoundary | null;
   expanded?: boolean;
   onClose?: () => void;
 };
@@ -39,12 +60,14 @@ type CityMapProps = {
 export default function CityMap({
   apiKey,
   location = null,
+  boundary = null,
   expanded = false,
   onClose,
 }: CityMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapInstance | null>(null);
   const markerRef = useRef<MarkerInstance | null>(null);
+  const polygonRef = useRef<PolygonInstance | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(
     apiKey ? null : "Map unavailable: API_KEY is not set in .env."
@@ -72,6 +95,7 @@ export default function CityMap({
           gestureHandling: "cooperative",
         });
         markerRef.current = new maps.Marker({ map: null });
+        polygonRef.current = new maps.Polygon({ ...WARD_OUTLINE, map: null });
         setReady(true);
       })
       .catch((err: Error) => {
@@ -102,6 +126,18 @@ export default function CityMap({
     });
     return () => cancelAnimationFrame(frame);
   }, [ready, location, expanded]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const polygon = polygonRef.current;
+    if (!ready || !map || !polygon) return;
+    if (!boundary) {
+      polygon.setMap(null);
+      return;
+    }
+    polygon.setPaths(toPaths(boundary));
+    polygon.setMap(map);
+  }, [ready, boundary]);
 
   useEffect(() => {
     if (!expanded || !onClose) return;
