@@ -109,8 +109,6 @@ export default function LocationSearch({
     if (!hasValue || busy) return;
     cancelPending();
     setOpen(false);
-    // TODO: also send the address to the api/ lookup endpoint
-    // to find the user's ward.
     onSearch(address.trim());
   }
 

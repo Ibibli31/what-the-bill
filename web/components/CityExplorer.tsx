@@ -1,28 +1,58 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import CityMap from "@/components/CityMap";
 import LocationSearch from "@/components/LocationSearch";
-import Sidebar from "@/components/Sidebar";
+import Sidebar, { type Representative } from "@/components/Sidebar";
 import {
   AddressNotFoundError,
   geocodeAddress,
   type GeocodedLocation,
 } from "@/services/geocoding";
+import { OutsideOttawaError, lookupWard, type Ward } from "@/services/ward";
 import styles from "@/modules/page.module.css";
+
+type WardStatus = "loading" | "done" | "outside" | "error";
+
+const WARD_STATUS_LABEL: Record<WardStatus, string | undefined> = {
+  loading: undefined,
+  done: undefined,
+  outside: "outside Ottawa",
+  error: "unavailable",
+};
 
 export default function CityExplorer({ apiKey }: { apiKey?: string }) {
   const [location, setLocation] = useState<GeocodedLocation | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ward, setWard] = useState<Ward | null>(null);
+  const [wardStatus, setWardStatus] = useState<WardStatus>("loading");
+  const wardRequestRef = useRef<AbortController | null>(null);
+
+  async function findWard(found: GeocodedLocation) {
+    wardRequestRef.current?.abort();
+    const controller = new AbortController();
+    wardRequestRef.current = controller;
+    setWard(null);
+    setWardStatus("loading");
+    try {
+      const result = await lookupWard(found.lat, found.lon, controller.signal);
+      if (controller.signal.aborted) return;
+      setWard(result);
+      setWardStatus("done");
+    } catch (err) {
+      if (controller.signal.aborted) return;
+      if (!(err instanceof OutsideOttawaError)) console.error("Ward lookup failed:", err);
+      setWardStatus(err instanceof OutsideOttawaError ? "outside" : "error");
+    }
+  }
 
   function showLocation(found: GeocodedLocation) {
     setError(null);
     setLocation(found);
     setExpanded(true);
-    // TODO: use found.lat / found.lon to look up the riding, MP,
-    // councillor and nearby development applications.
+    findWard(found);
   }
 
   async function handleSearch(address: string) {
@@ -45,12 +75,27 @@ export default function CityExplorer({ apiKey }: { apiKey?: string }) {
 
   const close = useCallback(() => setExpanded(false), []);
 
+  const councillor: Representative | undefined = ward?.councillor
+    ? {
+        name: ward.councillor.name,
+        district: `Ward ${ward.number} – ${ward.name}`,
+        email: ward.councillor.email ?? undefined,
+        phone: ward.councillor.phone ?? undefined,
+      }
+    : undefined;
+
   return (
     <>
       <div className={styles.section}>
         <p className={styles.label}>Your city</p>
         <div className={expanded ? `${styles.map} ${styles.mapExpanded}` : styles.map}>
-          <CityMap apiKey={apiKey} location={location} expanded={expanded} onClose={close} />
+          <CityMap
+            apiKey={apiKey}
+            location={location}
+            boundary={ward?.boundary}
+            expanded={expanded}
+            onClose={close}
+          />
         </div>
       </div>
 
@@ -61,9 +106,15 @@ export default function CityExplorer({ apiKey }: { apiKey?: string }) {
         error={error}
       />
 
-            {/* Filters only appear once we know where the user is. */}
-            {location && (
-        <Sidebar location={location} expanded={expanded} onOpen={() => setExpanded(true)} />
+      {/* Filters only appear once we know where the user is. */}
+      {location && (
+        <Sidebar
+          location={location}
+          expanded={expanded}
+          onOpen={() => setExpanded(true)}
+          ward={ward ? `${ward.number} · ${ward.name}` : WARD_STATUS_LABEL[wardStatus]}
+          representatives={{ municipal: councillor }}
+        />
       )}
     </>
   );

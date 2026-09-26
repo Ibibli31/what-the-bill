@@ -22,6 +22,8 @@ export type Representative = {
   name: string;
   district?: string;
   party?: string;
+  email?: string;
+  phone?: string;
 };
 
 export const LEVELS: { id: Level; label: string; role: string; short: string }[] = [

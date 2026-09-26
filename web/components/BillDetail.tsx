@@ -154,6 +154,18 @@ export function RepDetail({
           </div>
         </div>
 
+        {(rep?.email || rep?.phone) && (
+          <section className={styles.section}>
+            <p className={styles.label}>Contact</p>
+            {rep.phone && <p className={styles.text}>{rep.phone}</p>}
+            {rep.email && (
+              <a className={styles.source} href={`mailto:${rep.email}`}>
+                [ Email {rep.name} ]
+              </a>
+            )}
+          </section>
+        )}
+
         <div className={styles.stats}>
           <div>
             <b>{voted.length}</b>
