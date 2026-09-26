@@ -77,6 +77,10 @@ One councillor per ward, one mayor row. Current term (2022–2026) only.
 | plain_title | text, nullable | plain-language title (summarize/plain-titles.mjs) |
 | plain_title_confidence | text, nullable | 'high' or 'low' |
 | plain_title_source | text, nullable | text the title was generated from; a change triggers regeneration |
+| plain_summary | text, nullable | plain-language summary written on first click (web/app/api/summary/route.ts) |
+| plain_summary_confidence | text, nullable | 'high' or 'low' |
+| plain_summary_source | text, nullable | hash of the input the summary was written from; a change triggers regeneration |
+| plain_summary_generated_at | timestamptz, nullable | when a summary was last claimed or written; blocks duplicate requests for 60 seconds |
 | status | text | card badge |
 | last_activity_date | date, nullable | feed sort-by-recency |
 | ward_id | FK → wards, nullable | point-in-polygon against `location` |
@@ -93,6 +97,10 @@ Index: GiST on `location`, btree on `ward_id`.
 | plain_title | text, nullable | plain-language title (summarize/plain-titles.mjs) |
 | plain_title_confidence | text, nullable | 'high' or 'low' |
 | plain_title_source | text, nullable | text the title was generated from; a change triggers regeneration |
+| plain_summary | text, nullable | plain-language summary written on first click (web/app/api/summary/route.ts) |
+| plain_summary_confidence | text, nullable | 'high' or 'low' |
+| plain_summary_source | text, nullable | hash of the input the summary was written from; a change triggers regeneration |
+| plain_summary_generated_at | timestamptz, nullable | when a summary was last claimed or written; blocks duplicate requests for 60 seconds |
 | description | text | feeds the AI "options compared" summary |
 | ward_id | FK → wards, nullable | |
 | is_citywide | bool | routes to "Affects everyone" |
@@ -118,6 +126,10 @@ Index: GiST on `location`, btree on `ward_id`.
 | plain_title | text, nullable | Gemini plain-language title (summarize/plain-titles.mjs) |
 | plain_title_confidence | text, nullable | 'high' or 'low' |
 | plain_title_source | text, nullable | text the title was generated from; a change triggers regeneration |
+| plain_summary | text, nullable | plain-language summary written on first click (web/app/api/summary/route.ts) |
+| plain_summary_confidence | text, nullable | 'high' or 'low' |
+| plain_summary_source | text, nullable | hash of the input the summary was written from; a change triggers regeneration |
+| plain_summary_generated_at | timestamptz, nullable | when a summary was last claimed or written; blocks duplicate requests for 60 seconds |
 | ward_id | FK → wards, nullable | null = city-wide → "Affects everyone" |
 | tags | text[] | closed tag list (see below) |
 | vote_kind | enum(none/dissent/recorded) | |
@@ -175,6 +187,10 @@ No ward/geo link — matched by company name only, which won't always work.
 | plain_title | text, nullable | Gemini plain-language title (summarize/plain-titles.mjs) |
 | plain_title_confidence | text, nullable | 'high' or 'low' |
 | plain_title_source | text, nullable | text the title was generated from; a change triggers regeneration |
+| plain_summary | text, nullable | plain-language summary written on first click (web/app/api/summary/route.ts) |
+| plain_summary_confidence | text, nullable | 'high' or 'low' |
+| plain_summary_source | text, nullable | hash of the input the summary was written from; a change triggers regeneration |
+| plain_summary_generated_at | timestamptz, nullable | when a summary was last claimed or written; blocks duplicate requests for 60 seconds |
 | sponsor_mpp_id | FK → mpps, nullable | drives "always include Ottawa MPP bills" |
 | is_government_bill | bool | |
 | current_stage | text | latest stage-history row |
@@ -231,6 +247,10 @@ PK `(vote_id, mpp_id)`.
 | plain_title | text, nullable | Gemini plain-language title (summarize/plain-titles.mjs) |
 | plain_title_confidence | text, nullable | 'high' or 'low' |
 | plain_title_source | text, nullable | text the title was generated from; a change triggers regeneration |
+| plain_summary | text, nullable | plain-language summary written on first click (web/app/api/summary/route.ts) |
+| plain_summary_confidence | text, nullable | 'high' or 'low' |
+| plain_summary_source | text, nullable | hash of the input the summary was written from; a change triggers regeneration |
+| plain_summary_generated_at | timestamptz, nullable | when a summary was last claimed or written; blocks duplicate requests for 60 seconds |
 | status_name | text | LEGISinfo's plain-English status |
 | is_government_bill | bool | derived from `BillDocumentTypeName`, not LEGISinfo's own (always-false) flag |
 | origin_chamber | enum(house/senate) | |

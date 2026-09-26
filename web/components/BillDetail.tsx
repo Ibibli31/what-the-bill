@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { VOTE_LABEL, type Bill, type ItemKind, type Vote } from "@/lib/bill";
 import type { Representative, TextStyle } from "@/components/Sidebar";
 import GlossaryText from "@/components/GlossaryText";
@@ -20,6 +21,59 @@ function nextAction(bill: Bill) {
   if (bill.kind === "consultation" && bill.status === "Open") return "Give feedback";
   if (bill.kind === "devApp" && bill.voteSoon) return "Comment on this application";
   return null;
+}
+
+/** Summaries fetched this session, keyed by bill id. */
+const generated = new Map<string, string>();
+
+const POLL_MS = 2000;
+const MAX_POLLS = 8;
+
+/** Fetches a plain-language summary for a bill that has none saved, waiting out a summary another request is writing. */
+function useGeneratedSummary(bill: Bill, enabled: boolean) {
+  const needed = enabled && !bill.summary;
+  const [text, setText] = useState<string | null>(() => generated.get(bill.id) ?? null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    if (!needed || generated.has(bill.id)) return;
+    const controller = new AbortController();
+    setFailed(false);
+
+    (async () => {
+      for (let poll = 0; poll < MAX_POLLS; poll++) {
+        const response = await fetch("/api/summary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: bill.id }),
+          signal: controller.signal,
+        });
+        if (response.status === 202) {
+          await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+          if (controller.signal.aborted) return;
+          continue;
+        }
+        if (!response.ok) throw new Error(`Summary request failed with ${response.status}`);
+        const { summary } = (await response.json()) as { summary: string };
+        generated.set(bill.id, summary);
+        setText(summary);
+        return;
+      }
+      throw new Error("Summary took too long");
+    })().catch(() => {
+      if (!controller.signal.aborted) setFailed(true);
+    });
+
+    return () => controller.abort();
+  }, [bill.id, needed, attempt]);
+
+  return {
+    text: bill.summary ?? text,
+    loading: needed && !text && !failed,
+    failed: needed && !text && failed,
+    retry: () => setAttempt((count) => count + 1),
+  };
 }
 
 function voteNote(vote: Vote, bill: Bill) {
@@ -69,7 +123,9 @@ export default function BillDetail({
 }) {
   const totalMeetings = bill.lobbying.reduce((sum, item) => sum + item.meetings, 0);
   const maxMeetings = Math.max(1, ...bill.lobbying.map((item) => item.meetings));
-  const summary = textStyle === "plain" ? bill.summary : bill.officialSummary;
+  const plain = textStyle === "plain";
+  const generatedSummary = useGeneratedSummary(bill, plain);
+  const summary = plain ? generatedSummary.text : bill.officialSummary;
   // Votes and lobbying are recorded for bills and council motions only.
   const legislative = bill.kind === "bill" || bill.kind === "motion";
   const action = nextAction(bill);
@@ -117,19 +173,30 @@ export default function BillDetail({
           </a>
         )}
 
-        {(legislative || summary) && (
+        {(plain || legislative || summary) && (
           <section className={styles.section}>
-            <p className={styles.label}>{textStyle === "plain" ? COPY[bill.kind].about : "Official summary"}</p>
+            <p className={styles.label}>
+              {plain ? COPY[bill.kind].about : "Official summary"}
+              {plain && summary && <span className={styles.aiTag}>AI-generated</span>}
+            </p>
             {summary ? (
-              <p className={styles.text}>
-                <GlossaryText>{summary}</GlossaryText>
-              </p>
+              <p className={styles.text}>{summary}</p>
+            ) : generatedSummary.loading ? (
+              <div className={styles.skeleton} role="status" aria-label="Writing a plain-English summary">
+                <i />
+                <i />
+                <i />
+              </div>
+            ) : generatedSummary.failed ? (
+              <>
+                <p className={styles.muted}>Couldn&rsquo;t write a plain-English summary right now.</p>
+                <button type="button" className={styles.retry} onClick={generatedSummary.retry}>
+                  Try again
+                </button>
+                {bill.officialSummary && <p className={styles.text}>{bill.officialSummary}</p>}
+              </>
             ) : (
-              <p className={styles.muted}>
-                {textStyle === "plain"
-                  ? "A plain-English summary isn't ready yet. See the official text below."
-                  : "See the official text below."}
-              </p>
+              <p className={styles.muted}>See the official text below.</p>
             )}
           </section>
         )}
