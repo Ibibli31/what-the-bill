@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { VOTE_LABEL, type Bill, type ItemKind, type Vote } from "@/lib/bill";
 import type { Representative, TextStyle } from "@/components/Sidebar";
 import GlossaryText from "@/components/GlossaryText";
@@ -303,8 +303,20 @@ function MailIcon() {
   );
 }
 
-/** Copies the address to paste into webmail; mailto: does nothing without a desktop mail app. */
-function CopyButton({ text, label }: { text: string; label: string }) {
+/** Copies contact details to paste elsewhere; mailto: and tel: do nothing on most laptops. */
+function CopyButton({
+  text,
+  label,
+  copiedLabel,
+  icon,
+  className = styles.source,
+}: {
+  text: string;
+  label: string;
+  copiedLabel: string;
+  icon: ReactNode;
+  className?: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -316,18 +328,22 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   return (
     <button
       type="button"
-      className={styles.source}
+      className={className}
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(text);
           setCopied(true);
         } catch {
-          // Clipboard blocked (e.g. insecure context); the address is still shown to select by hand.
+          // Clipboard blocked (e.g. insecure context); the text is still shown to select by hand.
         }
       }}
     >
-      <MailIcon />
-      <span aria-live="polite">{copied ? "Email address copied" : label}</span>
+      {icon}
+      {/* Both labels share one grid cell, so the button is always as wide as the longer one. */}
+      <span className={styles.swap} aria-live="polite">
+        <span data-shown={!copied}>{label}</span>
+        <span data-shown={copied}>{copiedLabel}</span>
+      </span>
     </button>
   );
 }
@@ -371,10 +387,10 @@ export function RepDetail({
           <section className={styles.section}>
             <p className={styles.label}>Contact</p>
             {rep.phone && (
-              <a className={styles.contactLine} href={telHref(rep.phone)}>
+              <p className={styles.contactLine}>
                 <PhoneIcon />
                 {rep.phone}
-              </a>
+              </p>
             )}
             {rep.email && (
               <a className={styles.contactLine} href={`mailto:${rep.email}`}>
@@ -384,12 +400,28 @@ export function RepDetail({
             )}
             <div className={styles.contactActions}>
               {rep.phone && (
-                <a className={styles.source} href={telHref(rep.phone)}>
-                  <PhoneIcon />
-                  Call {rep.name}
-                </a>
+                <>
+                  <a className={`${styles.source} ${styles.callTouch}`} href={telHref(rep.phone)}>
+                    <PhoneIcon />
+                    Call {rep.name}
+                  </a>
+                  <CopyButton
+                    text={rep.phone}
+                    label={`Call ${rep.name}`}
+                    copiedLabel="Number copied"
+                    icon={<PhoneIcon />}
+                    className={`${styles.source} ${styles.callCopy}`}
+                  />
+                </>
               )}
-              {rep.email && <CopyButton text={rep.email} label={`Email ${rep.name}`} />}
+              {rep.email && (
+                <CopyButton
+                  text={rep.email}
+                  label={`Email ${rep.name}`}
+                  copiedLabel="Email copied"
+                  icon={<MailIcon />}
+                />
+              )}
             </div>
           </section>
         )}

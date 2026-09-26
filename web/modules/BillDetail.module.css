@@ -493,12 +493,44 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    margin: 0;
     color: var(--text);
     font-size: 15px;
     overflow-wrap: anywhere;
+  }
+
+  a.contactLine {
     text-decoration: underline;
     text-decoration-color: var(--control-border);
     text-underline-offset: 3px;
+  }
+
+  .swap {
+    display: inline-grid;
+  }
+
+  .swap > span {
+    grid-area: 1 / 1;
+    text-align: center;
+  }
+
+  .swap > [data-shown="false"] {
+    visibility: hidden;
+  }
+
+  /* Touch devices can hand a tel: link to the dialer; laptops copy the number instead. */
+  .callTouch {
+    display: none;
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    .contactActions .callTouch {
+      display: inline-flex;
+    }
+
+    .contactActions .callCopy {
+      display: none;
+    }
   }
 
   .contactIcon {
