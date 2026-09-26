@@ -1,23 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import {
+  OTTAWA,
+  loadMaps,
+  type MapInstance,
+  type MarkerInstance,
+} from "@/lib/googleMaps";
+import type { GeocodedLocation } from "@/services/geocoding";
 import styles from "@/modules/CityMap.module.css";
-
-type LatLng = { lat: number; lng: number };
-
-type MapsApi = {
-  Map: new (el: HTMLElement, options: Record<string, unknown>) => unknown;
-};
-
-declare global {
-  interface Window {
-    google?: { maps?: MapsApi };
-    gm_authFailure?: () => void;
-    __wtbMapsReady?: () => void;
-  }
-}
-
-const OTTAWA: LatLng = { lat: 45.4215, lng: -75.6972 };
 
 const MAP_STYLES = [
   { elementType: "geometry", stylers: [{ color: "#2a2a2a" }] },
@@ -38,37 +29,23 @@ const MAP_STYLES = [
   { featureType: "water", elementType: "geometry", stylers: [{ color: "#4b4b4b" }] },
 ];
 
-let mapsPromise: Promise<MapsApi> | null = null;
+type CityMapProps = {
+  apiKey?: string;
+  location?: GeocodedLocation | null;
+  expanded?: boolean;
+  onClose?: () => void;
+};
 
-function loadMaps(apiKey: string): Promise<MapsApi> {
-  if (window.google?.maps?.Map) return Promise.resolve(window.google.maps);
-  if (mapsPromise) return mapsPromise;
-
-  mapsPromise = new Promise<MapsApi>((resolve, reject) => {
-    window.__wtbMapsReady = () => {
-      const maps = window.google?.maps;
-      if (maps?.Map) resolve(maps);
-      else reject(new Error("Google Maps loaded without a Map constructor."));
-    };
-
-    const script = document.createElement("script");
-    script.src =
-      "https://maps.googleapis.com/maps/api/js?key=" +
-      encodeURIComponent(apiKey) +
-      "&loading=async&callback=__wtbMapsReady&v=weekly";
-    script.async = true;
-    script.onerror = () => {
-      mapsPromise = null;
-      reject(new Error("Google Maps failed to load."));
-    };
-    document.head.appendChild(script);
-  });
-
-  return mapsPromise;
-}
-
-export default function CityMap({ apiKey }: { apiKey?: string }) {
+export default function CityMap({
+  apiKey,
+  location = null,
+  expanded = false,
+  onClose,
+}: CityMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<MapInstance | null>(null);
+  const markerRef = useRef<MarkerInstance | null>(null);
+  const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(
     apiKey ? null : "Map unavailable: API_KEY is not set in .env."
   );
@@ -84,7 +61,7 @@ export default function CityMap({ apiKey }: { apiKey?: string }) {
     loadMaps(apiKey)
       .then((maps) => {
         if (cancelled || !containerRef.current) return;
-        new maps.Map(containerRef.current, {
+        mapRef.current = new maps.Map(containerRef.current, {
           center: OTTAWA,
           zoom: 13,
           styles: MAP_STYLES,
@@ -94,6 +71,8 @@ export default function CityMap({ apiKey }: { apiKey?: string }) {
           clickableIcons: false,
           gestureHandling: "cooperative",
         });
+        markerRef.current = new maps.Marker({ map: null });
+        setReady(true);
       })
       .catch((err: Error) => {
         if (!cancelled) setError(err.message);
@@ -104,10 +83,56 @@ export default function CityMap({ apiKey }: { apiKey?: string }) {
     };
   }, [apiKey]);
 
+  useEffect(() => {
+    const map = mapRef.current;
+    const marker = markerRef.current;
+    if (!ready || !map || !marker) return;
+
+    map.setOptions({ gestureHandling: expanded ? "greedy" : "cooperative" });
+
+    if (!location) return;
+    const position = { lat: location.lat, lng: location.lon };
+    marker.setPosition(position);
+    marker.setTitle(location.displayName);
+    marker.setMap(map);
+    // Wait a frame so the map has picked up its new size before re-centring.
+    const frame = requestAnimationFrame(() => {
+      map.setCenter(position);
+      map.setZoom(expanded ? 17 : 15);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [ready, location, expanded]);
+
+  useEffect(() => {
+    if (!expanded || !onClose) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [expanded, onClose]);
+
   return (
     <div className={styles.map} role="region" aria-label="Map of Ottawa">
       <div ref={containerRef} className={styles.canvas} />
       {error && <p className={styles.message}>{error}</p>}
+      {expanded && (
+        <div className={styles.toolbar}>
+          <button type="button" className={styles.back} onClick={onClose}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M19 12H5M11 6l-6 6 6 6"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Back
+          </button>
+          {location && <p className={styles.place}>{location.displayName}</p>}
+        </div>
+      )}
     </div>
   );
 }

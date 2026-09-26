@@ -64,6 +64,76 @@
   outline-offset: 2px;
 }
 
+.submit:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.error {
+  margin: 8px 2px 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  padding: 6px;
+  background: var(--field);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: var(--radius-field);
+  box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.6);
+  text-align: left;
+  overflow-y: auto;
+}
+
+.suggestions[data-placement="above"] {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
+.suggestionList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.suggestion {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.suggestion[data-active="true"] {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.suggestionStatus {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.attribution {
+  margin: 2px 0 0;
+  padding: 4px 12px 2px;
+  font-size: 11px;
+  color: var(--text-faint);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.attribution a {
+  color: inherit;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .input,
   .submit {

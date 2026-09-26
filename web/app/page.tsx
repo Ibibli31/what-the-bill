@@ -1,5 +1,4 @@
-import CityMap from "@/components/CityMap";
-import LocationSearch from "@/components/LocationSearch";
+import CityExplorer from "@/components/CityExplorer";
 import Logo from "@/components/Logo";
 import styles from "@/modules/page.module.css";
 
@@ -17,11 +16,7 @@ export default function HomePage() {
           <p className={styles.tagline}>Your city. Your government. In plain English.</p>
         </header>
 
-        <div className={styles.map}>
-          <CityMap apiKey={process.env.API_KEY} />
-        </div>
-
-        <LocationSearch />
+        <CityExplorer apiKey={process.env.API_KEY} />
 
         <p className={styles.footer}>
           <svg width="12" height="14" viewBox="0 0 12 14" aria-hidden="true">
