@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import BillDetail, { RepDetail } from "@/components/BillDetail";
+import GlossaryText from "@/components/GlossaryText";
 import {
   BILL_STATUSES,
   KIND_LABELS,
@@ -323,7 +324,7 @@ export default function Sidebar({
       >
         <div className={styles.head}>
           <p className={styles.meta}>
-            Ward<span>{ward ?? "pending"}</span>
+            <GlossaryText>Ward</GlossaryText><span>{ward ?? "pending"}</span>
           </p>
 
           <div className={styles.segmented} role="group" aria-label="Level of government">

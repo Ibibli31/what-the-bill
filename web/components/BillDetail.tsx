@@ -2,6 +2,7 @@
 
 import { VOTE_LABEL, type Bill, type ItemKind, type Vote } from "@/lib/bill";
 import type { Representative, TextStyle } from "@/components/Sidebar";
+import GlossaryText from "@/components/GlossaryText";
 import styles from "@/modules/BillDetail.module.css";
 
 type Role = { role: string; short: string; label: string };
@@ -79,7 +80,7 @@ export default function BillDetail({
       <div className={styles.body}>
         <div className={styles.tags}>
           <span className={styles.tag} data-status={bill.status}>
-            {bill.statusLabel}
+            <GlossaryText>{bill.statusLabel}</GlossaryText>
           </span>
           {bill.topics.map((topic) => (
             <span key={topic} className={styles.topic}>
@@ -99,7 +100,9 @@ export default function BillDetail({
             {bill.facts.map((fact) => (
               <div key={fact.label} style={{ display: "contents" }}>
                 <dt>{fact.label}</dt>
-                <dd>{fact.value}</dd>
+                <dd>
+                  <GlossaryText>{fact.value}</GlossaryText>
+                </dd>
               </div>
             ))}
           </dl>
@@ -118,7 +121,9 @@ export default function BillDetail({
           <section className={styles.section}>
             <p className={styles.label}>{textStyle === "plain" ? COPY[bill.kind].about : "Official summary"}</p>
             {summary ? (
-              <p className={styles.text}>{summary}</p>
+              <p className={styles.text}>
+                <GlossaryText>{summary}</GlossaryText>
+              </p>
             ) : (
               <p className={styles.muted}>
                 {textStyle === "plain"
@@ -132,7 +137,9 @@ export default function BillDetail({
         {bill.impact && (
           <section className={`${styles.section} ${styles.impact}`}>
             <p className={styles.label}>How it might affect you</p>
-            <p className={styles.text}>{bill.impact}</p>
+            <p className={styles.text}>
+              <GlossaryText>{bill.impact}</GlossaryText>
+            </p>
           </section>
         )}
 
@@ -142,7 +149,9 @@ export default function BillDetail({
             {bill.repVote ? (
               <div className={styles.vote}>
                 <b data-vote={bill.repVote}>{VOTE_LABEL[bill.repVote]}</b>
-                <span>{voteNote(bill.repVote, bill)}</span>
+                <span>
+                  <GlossaryText>{voteNote(bill.repVote, bill)}</GlossaryText>
+                </span>
               </div>
             ) : (
               <p className={styles.muted}>
@@ -159,7 +168,7 @@ export default function BillDetail({
               const current = stage.done && !bill.stages[index + 1]?.done;
               return (
                 <li key={stage.label} data-done={stage.done} data-current={current}>
-                  {stage.label}
+                  <GlossaryText>{stage.label}</GlossaryText>
                 </li>
               );
             })}
@@ -169,7 +178,7 @@ export default function BillDetail({
         {legislative && (
           <section className={styles.section}>
             <p className={styles.label}>
-              Lobbying · {totalMeetings} meeting{totalMeetings === 1 ? "" : "s"}
+              <GlossaryText>Lobbying</GlossaryText> · {totalMeetings} meeting{totalMeetings === 1 ? "" : "s"}
             </p>
             {bill.lobbying.length === 0 ? (
               <p className={styles.muted}>No registered lobbying on this yet.</p>
