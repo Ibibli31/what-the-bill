@@ -197,6 +197,56 @@
     color: var(--text-faint);
   }
   
+  /* Small "AI-generated" note beside the summary heading */
+  .aiTag {
+    margin-left: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-faint);
+  }
+
+  /* Placeholder lines shown while a summary is being written */
+  .skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .skeleton i {
+    display: block;
+    height: 12px;
+    border-radius: 6px;
+    background: var(--text-faint);
+    opacity: 0.25;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  .skeleton i:nth-child(2) {
+    width: 92%;
+  }
+
+  .skeleton i:nth-child(3) {
+    width: 60%;
+  }
+
+  @keyframes pulse {
+    50% {
+      opacity: 0.1;
+    }
+  }
+
+  .retry {
+    align-self: flex-start;
+    padding: 6px 14px;
+    border: 1px solid var(--text-faint);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
   /* Highlighted "how it affects you" block */
   .impact {
     padding: 14px 16px;
@@ -544,7 +594,8 @@
   }
   
   @media (prefers-reduced-motion: reduce) {
-    .body > * {
+    .body > *,
+    .skeleton i {
       animation: none;
     }
   }

@@ -6,6 +6,7 @@ type FederalRow = {
   number_code: string;
   title: string;
   plain_title: string | null;
+  plain_summary: string | null;
   status_name: string;
   origin_chamber: "house" | "senate";
   sponsor_mp_id: number | null;
@@ -29,6 +30,7 @@ type ProvincialRow = {
   bill_number: string;
   title: string;
   plain_title: string | null;
+  plain_summary: string | null;
   sponsor_mpp_id: number | null;
   current_stage: string;
   last_activity_date: string | null;
@@ -41,6 +43,7 @@ type MotionRow = {
   motion_number: string;
   summary: string;
   plain_title: string | null;
+  plain_summary: string | null;
   tags: string[] | null;
   wards: { ward_number: number } | null;
   result: "carried" | "lost" | "notice" | null;
@@ -60,6 +63,7 @@ type DevAppRow = {
   status: string;
   last_activity_date: string | null;
   plain_title: string | null;
+  plain_summary: string | null;
   source_url: string;
   wards: { ward_number: number } | null;
 };
@@ -68,6 +72,7 @@ type ConsultationRow = {
   consultation_id: number;
   title: string;
   plain_title: string | null;
+  plain_summary: string | null;
   closing_date: string | null;
   is_citywide: boolean;
   source_url: string;
@@ -228,7 +233,7 @@ function toFederal(row: FederalRow, ridingCodes: string[]): Bill {
     updated: row.last_activity_date ?? "",
     relevance: relevance(topics, row.sponsor_mp_id !== null, row.last_activity_date),
     voteSoon: false,
-    summary: null,
+    summary: row.plain_summary,
     officialSummary: null,
     impact: null,
     repVote: null,
@@ -265,7 +270,7 @@ function toProvincial(row: ProvincialRow): Bill {
     updated: row.last_activity_date ?? "",
     relevance: relevance(topics, row.sponsor_mpp_id !== null, row.last_activity_date),
     voteSoon: false,
-    summary: null,
+    summary: row.plain_summary,
     officialSummary: null,
     impact: null,
     repVote: null,
@@ -301,8 +306,8 @@ function toMotion(row: MotionRow, today: string): Bill {
     updated: meeting.meeting_date,
     relevance: Math.min(100, relevance(topics, true, meeting.meeting_date) + (row.wards ? 10 : 0)),
     voteSoon: meeting.meeting_date >= today || (meeting.speak_by_date ?? "") >= today,
-    summary: row.summary,
-    officialSummary: null,
+    summary: row.plain_summary,
+    officialSummary: row.summary,
     impact: null,
     repVote: null,
     lobbying: [],
@@ -337,7 +342,7 @@ function toDevApp(row: DevAppRow): Bill {
     updated: row.last_activity_date ?? "",
     relevance: Math.min(100, relevance(topics, true, row.last_activity_date) + (row.wards ? 10 : 0)),
     voteSoon: row.status.toLowerCase().includes("comment period in progress"),
-    summary: null,
+    summary: row.plain_summary,
     officialSummary: null,
     impact: null,
     repVote: null,
@@ -379,7 +384,7 @@ function toConsultation(row: ConsultationRow, today: string): Bill {
     updated: row.closing_date ?? "",
     relevance: Math.min(100, relevance([], true, row.closing_date) + (row.wards ? 10 : 0)),
     voteSoon: open && row.closing_date !== null,
-    summary: null,
+    summary: row.plain_summary,
     officialSummary: null,
     impact: null,
     repVote: null,
@@ -398,23 +403,23 @@ export async function getBills(): Promise<Bill[]> {
   const [federal, provincial, motions, devApps, consultations, mps] = await Promise.all([
     select<FederalRow>(
       "federal_bills",
-      "select=bill_id,number_code,title,plain_title,status_name,origin_chamber,sponsor_mp_id,last_activity_date,topic_tags,source_url,federal_votes(division_number,vote_label,vote_date,federal_ballots(ballot,mps(ridings(code))))"
+      "select=bill_id,number_code,title,plain_title,plain_summary,status_name,origin_chamber,sponsor_mp_id,last_activity_date,topic_tags,source_url,federal_votes(division_number,vote_label,vote_date,federal_ballots(ballot,mps(ridings(code))))"
     ),
     select<ProvincialRow>(
       "provincial_bills",
-      "select=bill_id,bill_number,title,plain_title,sponsor_mpp_id,current_stage,last_activity_date,topic_tags,source_url"
+      "select=bill_id,bill_number,title,plain_title,plain_summary,sponsor_mpp_id,current_stage,last_activity_date,topic_tags,source_url"
     ),
     select<MotionRow>(
       "motions",
-      "select=motion_id,motion_number,summary,plain_title,tags,result,wards(ward_number),meetings(committee_name,meeting_date,speak_by_date,source_url)"
+      "select=motion_id,motion_number,summary,plain_title,plain_summary,tags,result,wards(ward_number),meetings(committee_name,meeting_date,speak_by_date,source_url)"
     ),
     select<DevAppRow>(
       "dev_apps",
-      "select=app_id,file_number,address,application_type,status,last_activity_date,plain_title,source_url,wards(ward_number)"
+      "select=app_id,file_number,address,application_type,status,last_activity_date,plain_title,plain_summary,source_url,wards(ward_number)"
     ),
     select<ConsultationRow>(
       "consultations",
-      "select=consultation_id,title,plain_title,closing_date,is_citywide,source_url,wards(ward_number)"
+      "select=consultation_id,title,plain_title,plain_summary,closing_date,is_citywide,source_url,wards(ward_number)"
     ),
     select<MpRow>("mps", "select=ridings(code)"),
   ]);

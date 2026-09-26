@@ -10,3 +10,11 @@ Only rows with no title, or whose source text changed, are sent to Gemini.
 
 Consultations are titled by Gemini. Development applications are titled from a template in `plain-titles.mjs` (application type plus address), with no API call.
 Also run `db/migrations/2026-09-26-plain-titles-consultations-dev-apps.sql`.
+
+## On-demand summaries
+
+Plain-language summaries are written when a user first opens an item, not in batch, by `web/app/api/summary/route.ts` using `web/lib/summarize.ts`.
+
+Run `db/migrations/2026-09-26-plain-summaries.sql` before deploying the web app. It needs the same `GEMINI_API_KEY` and `GEMINI_MODEL` as the titles.
+
+To rewrite a summary, set `plain_summary` to null on its row; the next click regenerates it.
