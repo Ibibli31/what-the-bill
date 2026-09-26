@@ -2,9 +2,22 @@ import Backdrop from "@/components/Backdrop";
 import CityExplorer from "@/components/CityExplorer";
 import LearnMore from "@/components/LearnMore";
 import Logo from "@/components/Logo";
+import type { Bill } from "@/lib/bill";
+import { getBills } from "@/services/bills";
 import styles from "@/modules/page.module.css";
 
-export default function HomePage() {
+async function loadBills(): Promise<Bill[] | null> {
+  try {
+    return await getBills();
+  } catch (error) {
+    console.error("Loading bills from Supabase failed:", error);
+    return null;
+  }
+}
+
+export default async function HomePage() {
+  const bills = await loadBills();
+
   return (
     <main className={styles.page}>
       <Backdrop />
@@ -28,7 +41,7 @@ export default function HomePage() {
           <p className={styles.tagline}>Your city. Your government. In plain English.</p>
         </header>
 
-        <CityExplorer apiKey={process.env.API_KEY} />
+        <CityExplorer apiKey={process.env.API_KEY} bills={bills} />
 
         <p className={styles.footer}>
           <span>Status: ready</span>

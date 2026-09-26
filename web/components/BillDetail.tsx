@@ -1,6 +1,6 @@
 "use client";
 
-import type { Bill } from "@/data/sampleBills";
+import type { Bill } from "@/lib/bill";
 import type { Representative, TextStyle } from "@/components/Sidebar";
 import styles from "@/modules/BillDetail.module.css";
 
@@ -36,6 +36,7 @@ export default function BillDetail({
 }) {
   const totalMeetings = bill.lobbying.reduce((sum, item) => sum + item.meetings, 0);
   const maxMeetings = Math.max(1, ...bill.lobbying.map((item) => item.meetings));
+  const summary = textStyle === "plain" ? bill.summary : bill.officialSummary;
 
   return (
     <>
@@ -53,28 +54,42 @@ export default function BillDetail({
         </div>
 
         <h2 className={styles.title}>{bill.title}</h2>
-        <p className={styles.updated}>Last activity {bill.updated}</p>
+        {bill.updated && <p className={styles.updated}>Last activity {bill.updated}</p>}
 
         <section className={styles.section}>
           <p className={styles.label}>{textStyle === "plain" ? "What it does" : "Official summary"}</p>
-          <p className={styles.text}>{textStyle === "plain" ? bill.summary : bill.officialSummary}</p>
+          {summary ? (
+            <p className={styles.text}>{summary}</p>
+          ) : (
+            <p className={styles.muted}>
+              {textStyle === "plain"
+                ? "A plain-English summary isn't ready yet. See the official text below."
+                : "See the official text below."}
+            </p>
+          )}
         </section>
 
-        <section className={`${styles.section} ${styles.impact}`}>
-          <p className={styles.label}>How it might affect you</p>
-          <p className={styles.text}>{bill.impact}</p>
-        </section>
+        {bill.impact && (
+          <section className={`${styles.section} ${styles.impact}`}>
+            <p className={styles.label}>How it might affect you</p>
+            <p className={styles.text}>{bill.impact}</p>
+          </section>
+        )}
 
         <section className={styles.section}>
           <p className={styles.label}>How {role.short === "CLR" ? "your councillor" : `your ${role.short}`} voted</p>
-          <div className={styles.vote}>
-            <b data-vote={bill.repVote}>{VOTE_LABEL[bill.repVote]}</b>
-            <span>
-              {bill.repVote === "none"
-                ? "This hasn't come to a vote yet."
-                : `Recorded vote at ${bill.status === "Passed" || bill.status === "Defeated" ? "the final" : "the latest"} stage.`}
-            </span>
-          </div>
+          {bill.repVote ? (
+            <div className={styles.vote}>
+              <b data-vote={bill.repVote}>{VOTE_LABEL[bill.repVote]}</b>
+              <span>
+                {bill.repVote === "none"
+                  ? "This hasn't come to a vote yet."
+                  : `Recorded vote at ${bill.status === "Passed" || bill.status === "Defeated" ? "the final" : "the latest"} stage.`}
+              </span>
+            </div>
+          ) : (
+            <p className={styles.muted}>Shows once the ward lookup is connected.</p>
+          )}
         </section>
 
         <section className={styles.section}>
@@ -133,7 +148,7 @@ export function RepDetail({
   onOpenBill: (id: string) => void;
   onClose: () => void;
 }) {
-  const voted = bills.filter((bill) => bill.repVote !== "none");
+  const voted = bills.filter((bill) => bill.repVote && bill.repVote !== "none");
   const yes = voted.filter((bill) => bill.repVote === "yes").length;
 
   return (
@@ -183,15 +198,20 @@ export function RepDetail({
 
         <section className={styles.section}>
           <p className={styles.label}>Voting record</p>
+          {voted.length === 0 && (
+            <p className={styles.muted}>
+              {rep ? "No recorded votes on these bills yet." : "Shows once the ward lookup is connected."}
+            </p>
+          )}
           <ul className={styles.record}>
-            {bills.map((bill) => (
+            {voted.map((bill) => (
               <li key={bill.id}>
                 <button type="button" onClick={() => onOpenBill(bill.id)}>
                   <span className={styles.recordTitle}>
                     <span>{bill.number}</span>
                     {bill.title}
                   </span>
-                  <b data-vote={bill.repVote}>{VOTE_LABEL[bill.repVote]}</b>
+                  {bill.repVote && <b data-vote={bill.repVote}>{VOTE_LABEL[bill.repVote]}</b>}
                 </button>
               </li>
             ))}
