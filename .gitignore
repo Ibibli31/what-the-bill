@@ -2,3 +2,5 @@ node_modules/
 .next/
 .DS_Store
 .env
+# copied from node_modules by web/scripts/copy-maplibre-worker.mjs
+web/public/maplibre/

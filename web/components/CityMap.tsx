@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { CircleMarker, GeoJSON as GeoJSONLayer, LatLngBounds, Map as LeafletMap } from "leaflet";
+import type { StyleSpecification } from "maplibre-gl";
 import "leaflet/dist/leaflet.css";
+import "maplibre-gl/dist/maplibre-gl.css";
+import basicStyle from "@/lib/mapStyle.json";
 import type { GeocodedLocation } from "@/services/geocoding";
 import { fetchOttawaMask } from "@/services/riding";
 import type { WardBoundary } from "@/services/ward";
@@ -10,12 +13,9 @@ import styles from "@/modules/CityMap.module.css";
 
 const OTTAWA: [number, number] = [45.4215, -75.6972];
 
-// OpenStreetMap's own tiles: no API key or account. Attribution is required, and
-// the tile usage policy (https://operations.osmfoundation.org/policies/tiles/)
-// asks for light use only. The dark look is a CSS filter in CityMap.module.css.
-const TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-const ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+// OpenMapTiles "Basic" style drawn from OpenFreeMap vector tiles; no API key needed.
+const MAP_STYLE = basicStyle as StyleSpecification;
+const MAPLIBRE_WORKER = "/maplibre/maplibre-gl-worker.mjs";
 
 const WARD_OUTLINE = {
   color: "#d52b1e",
@@ -70,21 +70,24 @@ export default function CityMap({
     let cancelled = false;
     let map: LeafletMap | null = null;
 
-    import("leaflet")
-      .then((L) => {
+    Promise.all([
+      import("leaflet"),
+      import("maplibre-gl"),
+      import("@maplibre/maplibre-gl-leaflet"),
+    ])
+      .then(([L, maplibre, { maplibreGL }]) => {
         if (cancelled || !containerRef.current) return;
         leafletRef.current = L;
+        maplibre.setWorkerUrl(MAPLIBRE_WORKER);
         map = L.map(containerRef.current, {
           center: OTTAWA,
           zoom: 13,
           scrollWheelZoom: false,
           attributionControl: true,
+          maxZoom: 19,
           maxBoundsViscosity: 1,
         });
-        L.tileLayer(TILES, {
-          attribution: ATTRIBUTION,
-          maxZoom: 19,
-        }).addTo(map);
+        maplibreGL({ style: MAP_STYLE }).addTo(map);
         map.createPane("mask").style.zIndex = "350";
         mapRef.current = map;
         setReady(true);
