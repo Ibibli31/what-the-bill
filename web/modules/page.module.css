@@ -124,7 +124,7 @@
   position: absolute;
   top: 20px;
   left: calc(20px + var(--sidebar-space, 0px));
-  right: 20px;
+  right: 76px; /* room for the 44px zoom buttons + a 12px gap */
   z-index: 1;
   max-width: 640px;
 }
@@ -356,4 +356,23 @@
 
 .map:not(.mapExpanded) :global(.leaflet-top.leaflet-left .leaflet-control) {
   margin: 0 12px 12px 0;
+}
+
+/* Full screen, the sidebar covers the left, so the zoom buttons sit top-right,
+   level with the search bar (which stops short of them, see .mapSearch). */
+.map.mapExpanded :global(.leaflet-top.leaflet-left) {
+  top: 20px;
+  left: auto;
+  right: 20px;
+}
+
+.map.mapExpanded :global(.leaflet-top.leaflet-left .leaflet-control) {
+  margin: 0;
+}
+
+.map.mapExpanded :global(.leaflet-control-zoom a) {
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
+  font-size: 24px;
 }
