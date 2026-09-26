@@ -44,6 +44,8 @@ from (select ST_SetSRID(ST_MakePoint(:lng, :lat), 4326) as pt) p;
 Geocoding uses the City of Ottawa's public ArcGIS locator (exact matches only) to turn an address into `:lng`/`:lat`.
 
 **Function `ward_lookup(lat, lng)`** (`db/functions/ward_lookup.sql`): returns the containing ward's number and name, its councillor's name/email/phone, and the boundary as GeoJSON. No rows when the point is outside Ottawa. Called by the web app's `/api/ward` route.
+
+**Function `riding_lookup(lat, lng)`** (`db/functions/riding_lookup.sql`): returns the federal and provincial ridings containing the point (level, code, name, member name/party/email, boundary as GeoJSON). No rows unless the point is inside an Ottawa ward. Called by the web app's `/api/riding` route.
  
 ---
  
