@@ -17,10 +17,10 @@ type Role = { role: string; short: string; label: string };
 
 /** Per-kind wording: what the summary is called and where the source link goes. */
 const COPY: Record<ItemKind, { about: string; source: string }> = {
-  bill: { about: "What it does", source: "Read the official text" },
-  motion: { about: "What it does", source: "View the meeting record" },
-  consultation: { about: "What it’s about", source: "View the consultation" },
-  devApp: { about: "What’s proposed", source: "View the application" },
+  bill: { about: "What it does", source: "View more" },
+  motion: { about: "What it does", source: "View more" },
+  consultation: { about: "What it’s about", source: "View more" },
+  devApp: { about: "What’s proposed", source: "View more" },
 };
 
 /** The one thing to do next, when there is one. Opens the same page as the source link. */
@@ -146,7 +146,15 @@ function voteNote(vote: Vote, bill: Bill) {
   }
 }
 
-function Titlebar({ title, onClose }: { title: string; onClose: () => void }) {
+function Titlebar({
+  title,
+  onClose,
+  source,
+}: {
+  title: string;
+  onClose: () => void;
+  source?: { url: string; label: string };
+}) {
   return (
     <div className={styles.titlebar}>
       {/* Phones/tablets: the details cover the list, so this reads as "back" */}
@@ -157,6 +165,26 @@ function Titlebar({ title, onClose }: { title: string; onClose: () => void }) {
         Back
       </button>
       <span className={styles.windowTitle}>{title}</span>
+        {source && (
+          <a
+            className={styles.sourceIcon}
+            href={source.url}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={source.label}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5zM14 3v5h5M9 13h6M9 17h6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span className={styles.sourceText}>{source.label}</span>
+          </a>
+        )}
       <button type="button" className={styles.close} onClick={onClose} aria-label="Close details">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
@@ -284,7 +312,10 @@ export default function BillDetail({
 
   return (
     <>
-      <Titlebar title={bill.number} onClose={onClose} />
+      <Titlebar
+        title={bill.number} onClose={onClose}
+        source={{ url: bill.sourceUrl, label: COPY[bill.kind].source }}
+      />
       <div className={styles.body}>
         <div className={styles.tags}>
           <span className={styles.tag} data-status={bill.status}>
@@ -297,11 +328,11 @@ export default function BillDetail({
           ))}
         </div>
 
-        <h2 className={styles.title}>{textStyle === "plain" ? bill.title : bill.officialTitle}</h2>
-        {textStyle === "plain" && bill.officialTitle !== bill.title && (
+        <h2 className={styles.title}>{plain ? bill.title : bill.officialTitle}</h2>
+        {plain && bill.officialTitle !== bill.title && (
           <p className={styles.updated}>Official title: {bill.officialTitle}</p>
         )}
-        {bill.kind === "bill" && bill.updated && <p className={styles.updated}>Last activity {bill.updated}</p>}
+        {bill.kind === "bill" && bill.updated && <p className={styles.updated}>Last activity: {bill.updated}</p>}
 
         {bill.facts.length > 0 && (
           <dl className={styles.facts}>
@@ -432,13 +463,6 @@ export default function BillDetail({
               </ul>
             )}
           </section>
-        )}
-
-        {/* The action button already links to the source. */}
-        {!action && (
-          <a className={styles.source} href={bill.sourceUrl} target="_blank" rel="noreferrer">
-            {COPY[bill.kind].source}
-          </a>
         )}
       </div>
     </>

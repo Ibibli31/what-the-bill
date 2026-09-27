@@ -10,7 +10,7 @@
 
 .term:hover,
 .term[aria-describedby] {
-  color: var(--white);
+  color: var(--ink);
   background: rgba(124, 196, 171, 0.14);
 }
 
