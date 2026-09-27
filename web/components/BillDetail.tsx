@@ -306,7 +306,11 @@ export default function BillDetail({
             <ul className={styles.personalList}>
               {impacts.impacts.map((impact, index) => (
                 <li key={index} className={`${styles.section} ${styles.impact}`}>
-                  <p className={styles.label}>{impact.category}</p>
+                  <p className={styles.label}>
+                    {impact.relevance === "situational"
+                      ? "If this applies to you"
+                      : `${impact.category} · ${impact.relevance === "direct" ? "Direct" : "Indirect"}`}
+                  </p>
                   <p className={styles.text}>{impact.explanation}</p>
                 </li>
               ))}

@@ -150,7 +150,7 @@ const RESPONSE_SCHEMA = {
   required: ["summary", "confidence", "evidence"],
 };
 
-const OUTCOME_WORDS = /\b(passed|failed|defeated|became law|was carried|was approved)\b/i;
+export const OUTCOME_WORDS = /\b(passed|failed|defeated|became law|was carried|was approved)\b/i;
 const FILLER_WORDS = /\b(aims to|various|a number of|among other things|seeks to address)\b/i;
 
 /** The part of the document the model is shown. */

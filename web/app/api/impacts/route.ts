@@ -1,6 +1,18 @@
 import { analyzeImpacts } from "@/lib/impacts";
 import { describeAnswers, sanitizeAnswers } from "@/lib/profile";
+import { select } from "@/lib/supabase";
 import { getBills } from "@/services/bills";
+
+type Source = { source_text: string | null; source_text_truncated: boolean | null };
+
+/** Table and primary key for each id prefix. */
+const TABLES: Record<string, [table: string, pk: string]> = {
+  f: ["federal_bills", "bill_id"],
+  p: ["provincial_bills", "bill_id"],
+  m: ["motions", "motion_id"],
+  d: ["dev_apps", "app_id"],
+  c: ["consultations", "consultation_id"],
+};
 
 const GENERATIONS_PER_MINUTE = 10;
 const recent = new Map<string, number[]>();
@@ -31,10 +43,16 @@ export async function POST(request: Request) {
     const bill = (await getBills()).find((item) => item.id === id);
     if (!bill) return Response.json({ error: "No such item" }, { status: 404 });
 
+    const [table, pk] = TABLES[id[0]];
+    const [source] = await select<Source>(table, `select=source_text,source_text_truncated&${pk}=eq.${id.slice(2)}`);
+    // No official text: nothing to tie a connection to.
+    if (!source?.source_text) return Response.json({ impacts: [] });
+
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
     if (!underLimit(ip)) return Response.json({ error: "Too many requests" }, { status: 429 });
 
-    return Response.json({ impacts: await analyzeImpacts(bill, profile) });
+    const impacts = await analyzeImpacts(bill, source.source_text, source.source_text_truncated ?? false, profile);
+    return Response.json({ impacts });
   } catch (error) {
     console.error("impact analysis failed:", error);
     return Response.json({ error: "Could not analyze this item" }, { status: 502 });

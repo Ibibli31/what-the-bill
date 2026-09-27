@@ -191,7 +191,7 @@ export function describeAnswers(answers: ProfileAnswers): Record<string, string 
   return described;
 }
 
-const PROFILE_LABELS: Record<keyof ProfileAnswers, string> = {
+export const PROFILE_LABELS: Record<keyof ProfileAnswers, string> = {
   ageRange: "Age range",
   studentStatus: "Student status",
   employmentStatus: "Employment status",
