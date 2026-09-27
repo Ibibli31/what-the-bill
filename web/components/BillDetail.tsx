@@ -371,7 +371,7 @@ export function RepDetail({
       <div className={styles.body}>
         <div className={styles.repHead}>
           <span className={styles.avatar} aria-hidden="true">
-            {role.short}
+            {rep?.photoUrl ? <img className={styles.avatarPhoto} src={rep.photoUrl} alt="" /> : role.short}
           </span>
           <div>
             <h2 className={styles.title}>{rep?.name ?? "Not loaded yet"}</h2>

@@ -98,6 +98,7 @@ export default function CityExplorer({
         district: `Ward ${ward.number} – ${ward.name}`,
         email: ward.councillor.email ?? undefined,
         phone: ward.councillor.phone ?? undefined,
+        photoUrl: ward.councillor.photoUrl ?? undefined,
       }
     : undefined;
 
@@ -110,6 +111,7 @@ export default function CityExplorer({
       party: riding.member.party ?? undefined,
       email: riding.member.email ?? undefined,
       phone: riding.member.phone ?? undefined,
+      photoUrl: riding.member.photoUrl ?? undefined,
     };
   }
 

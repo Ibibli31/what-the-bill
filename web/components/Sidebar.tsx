@@ -37,6 +37,7 @@ export type Representative = {
   party?: string;
   email?: string;
   phone?: string;
+  photoUrl?: string;
 };
 
 export const LEVELS: { id: Level; label: string; role: string; short: string }[] = [
@@ -352,7 +353,7 @@ export default function Sidebar({
             onClick={() => open(selected?.kind === "rep" ? null : { kind: "rep" })}
           >
             <span className={styles.avatar} aria-hidden="true">
-              {level.short}
+              {rep?.photoUrl ? <img className={styles.avatarPhoto} src={rep.photoUrl} alt="" /> : level.short}
             </span>
             <span className={styles.repText}>
               <span className={styles.repRole}>{level.role}</span>

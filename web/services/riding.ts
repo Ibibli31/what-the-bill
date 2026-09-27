@@ -7,6 +7,7 @@ export type Member = {
   party: string | null;
   email: string | null;
   phone: string | null;
+  photoUrl: string | null;
 };
 
 export type Riding = {

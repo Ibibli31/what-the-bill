@@ -7,6 +7,7 @@ export type Councillor = {
   name: string;
   email: string | null;
   phone: string | null;
+  photoUrl: string | null;
 };
 
 export type Ward = {
