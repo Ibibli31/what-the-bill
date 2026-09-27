@@ -6,6 +6,7 @@ type WardLookupRow = {
   councillor_name: string | null;
   councillor_email: string | null;
   councillor_phone: string | null;
+  councillor_photo_url: string | null;
   boundary: WardBoundary;
 };
 
@@ -47,7 +48,12 @@ export async function GET(request: Request) {
     number: row.ward_number,
     name: row.ward_name,
     councillor: row.councillor_name
-      ? { name: row.councillor_name, email: row.councillor_email, phone: row.councillor_phone }
+      ? {
+          name: row.councillor_name,
+          email: row.councillor_email,
+          phone: row.councillor_phone,
+          photoUrl: row.councillor_photo_url,
+        }
       : null,
     boundary: row.boundary,
   };

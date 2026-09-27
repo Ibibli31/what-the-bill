@@ -43,9 +43,9 @@ from (select ST_SetSRID(ST_MakePoint(:lng, :lat), 4326) as pt) p;
 ```
 Geocoding uses the City of Ottawa's public ArcGIS locator (exact matches only) to turn an address into `:lng`/`:lat`.
 
-**Function `ward_lookup(lat, lng)`** (`db/functions/ward_lookup.sql`): returns the containing ward's number and name, its councillor's name/email/phone, and the boundary as GeoJSON. No rows when the point is outside Ottawa. Called by the web app's `/api/ward` route.
+**Function `ward_lookup(lat, lng)`** (`db/functions/ward_lookup.sql`): returns the containing ward's number and name, its councillor's name/email/phone/photo, and the boundary as GeoJSON. No rows when the point is outside Ottawa. Called by the web app's `/api/ward` route.
 
-**Function `riding_lookup(lat, lng)`** (`db/functions/riding_lookup.sql`): returns the federal and provincial ridings containing the point (level, code, name, member name/party/email, boundary as GeoJSON). No rows unless the point is inside an Ottawa ward. Called by the web app's `/api/riding` route.
+**Function `riding_lookup(lat, lng)`** (`db/functions/riding_lookup.sql`): returns the federal and provincial ridings containing the point (level, code, name, member name/party/email/photo, boundary as GeoJSON). No rows unless the point is inside an Ottawa ward. Called by the web app's `/api/riding` route.
  
 **Function `ottawa_mask()`** (`db/functions/ottawa_mask.sql`): returns the world extent minus the union of all ward boundaries (the city limits), as GeoJSON. Called by the web app's `/api/ottawa-mask` route; the map uses its holes to black out everything outside the city.
  
@@ -63,6 +63,7 @@ Geocoding uses the City of Ottawa's public ArcGIS locator (exact matches only) t
 | is_mayor | bool | |
 | email | text | "Email your councillor" |
 | phone | text | |
+| photo_url | text, nullable | portrait in the `member-photos` storage bucket (web/scripts/upload-member-photos.mjs) |
  
 One councillor per ward, one mayor row. Current term (2022–2026) only.
  
@@ -173,6 +174,7 @@ No ward/geo link — matched by company name only, which won't always work.
 | riding_id | FK → ridings (level=provincial), nullable | null for the one MPP whose riding isn't loaded |
 | party | text | |
 | email | text | "Contact your MPP" |
+| photo_url | text, nullable | portrait in the `member-photos` storage bucket |
  
 9 Ottawa-area MPPs (the 8 core ridings plus Glengarry—Prescott—Russell, which covers Ottawa's rural east).
  
@@ -232,6 +234,7 @@ PK `(vote_id, mpp_id)`.
 | riding_id | FK → ridings (level=federal) | |
 | party | text | |
 | email | text | "Contact your MP" |
+| photo_url | text, nullable | portrait in the `member-photos` storage bucket |
  
 9 Ottawa-area MPs (one per federal riding).
  

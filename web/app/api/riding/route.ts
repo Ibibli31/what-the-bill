@@ -9,6 +9,7 @@ type RidingLookupRow = {
   member_party: string | null;
   member_email: string | null;
   member_phone: string | null;
+  member_photo_url: string | null;
   boundary: WardBoundary;
 };
 
@@ -51,7 +52,13 @@ export async function GET(request: Request) {
     code: row.code,
     name: row.riding_name,
     member: row.member_name
-      ? { name: row.member_name, party: row.member_party, email: row.member_email, phone: row.member_phone }
+      ? {
+          name: row.member_name,
+          party: row.member_party,
+          email: row.member_email,
+          phone: row.member_phone,
+          photoUrl: row.member_photo_url,
+        }
       : null,
     boundary: row.boundary,
   }));

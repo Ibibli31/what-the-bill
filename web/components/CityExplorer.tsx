@@ -100,6 +100,7 @@ export default function CityExplorer({
         districtCode: String(ward.number),
         email: ward.councillor.email ?? undefined,
         phone: ward.councillor.phone ?? undefined,
+        photoUrl: ward.councillor.photoUrl ?? undefined,
       }
     : undefined;
 
@@ -112,6 +113,7 @@ export default function CityExplorer({
       party: riding.member.party ?? undefined,
       email: riding.member.email ?? undefined,
       phone: riding.member.phone ?? undefined,
+      photoUrl: riding.member.photoUrl ?? undefined,
     };
   }
 
