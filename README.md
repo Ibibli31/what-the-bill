@@ -1,3 +1,5 @@
+__WHAT THE BILL!?__
+
 **Inspiration**
 
 If we were to ask you who the current Prime Minister of Canada is, chances are you'd be able to answer quite easily. But who's your city councillor? What did council vote on last month? For most people the decisions closest to home are the ones they know the least about. The information is public but it's scattered across three levels of government and buried in legal language. We wanted all you'd need to be your address.
