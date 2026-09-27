@@ -4,9 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "titles": "node --env-file=../.env plain-titles.mjs"
+    "titles": "node --env-file=../.env plain-titles.mjs",
+    "titles:sample": "node --env-file=../.env plain-titles.mjs --sample",
+    "sources": "node --env-file=../.env fetch-sources.mjs"
   },
   "dependencies": {
-    "@google/genai": "^1.0.0"
+    "@google/genai": "^1.0.0",
+    "cheerio": "^1.2.0"
   }
 }

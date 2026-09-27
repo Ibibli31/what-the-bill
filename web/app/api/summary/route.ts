@@ -1,25 +1,27 @@
-import { createHash } from "node:crypto";
-import { generate, describe, type ItemInput, type SponsorKind } from "@/lib/summarize";
+import { generate, sourceHash, SUMMARY_VERSION, type ItemInput, type SponsorKind } from "@/lib/summarize";
 import { patch, selectFresh } from "@/lib/supabase";
 
-type Saved = { plain_summary: string | null; plain_summary_confidence: "high" | "low" | null; plain_summary_source: string | null };
+type Saved = {
+  plain_summary: string | null;
+  plain_summary_confidence: "high" | "low" | null;
+  plain_summary_source: string | null;
+  source_text: string | null;
+  source_text_truncated: boolean | null;
+};
 type Ward = { ward_number: number } | null;
 
 type Spec<Row> = {
   table: string;
   pk: string;
   select: string;
-  input: (row: Row) => ItemInput;
+  input: (row: Row) => Omit<ItemInput, "document" | "truncated">;
 };
 
-const SAVED = "plain_summary,plain_summary_confidence,plain_summary_source";
-const MAX_DETAILS = 1500;
+const SAVED = "plain_summary,plain_summary_confidence,plain_summary_source,source_text,source_text_truncated";
 const CLAIM_SECONDS = 60;
 const GENERATIONS_PER_MINUTE = 20;
 
-const clip = (text: string | null) => (text ?? "").trim().slice(0, MAX_DETAILS);
 const wardLabel = (ward: Ward, citywide = false) => (citywide || !ward ? "City-wide" : `Ward ${ward.ward_number}`);
-const topics = (tags: string[] | null) => (tags?.length ? `Topics: ${tags.join(", ")}` : "");
 
 function sponsorKind(government: boolean, ottawaSponsor: boolean): SponsorKind {
   if (government) return "government";
@@ -27,26 +29,27 @@ function sponsorKind(government: boolean, ottawaSponsor: boolean): SponsorKind {
 }
 
 type FederalRow = Saved & {
+  number_code: string;
   title: string;
   status_name: string;
-  topic_tags: string[] | null;
   is_government_bill: boolean;
   sponsor_mp_id: number | null;
 };
 type ProvincialRow = Saved & {
+  bill_number: string;
   title: string;
   current_stage: string;
-  topic_tags: string[] | null;
   is_government_bill: boolean;
   sponsor_mpp_id: number | null;
 };
 type MotionRow = Saved & {
-  summary: string;
+  motion_number: string;
   result: string | null;
   wards: Ward;
   meetings: { committee_name: string };
 };
 type DevAppRow = Saved & {
+  file_number: string;
   address: string | null;
   application_type: string;
   status: string;
@@ -54,7 +57,6 @@ type DevAppRow = Saved & {
 };
 type ConsultationRow = Saved & {
   title: string;
-  description: string | null;
   closing_date: string | null;
   is_citywide: boolean;
   wards: Ward;
@@ -64,11 +66,11 @@ const SPECS = {
   f: {
     table: "federal_bills",
     pk: "bill_id",
-    select: `title,status_name,topic_tags,is_government_bill,sponsor_mp_id,${SAVED}`,
-    input: (row: FederalRow): ItemInput => ({
-      itemType: "federal_bill",
+    select: `number_code,title,status_name,is_government_bill,sponsor_mp_id,${SAVED}`,
+    input: (row: FederalRow) => ({
+      itemType: "federal_bill" as const,
+      number: row.number_code,
       title: row.title,
-      details: topics(row.topic_tags),
       location: "",
       committee: "",
       sponsor: sponsorKind(row.is_government_bill, row.sponsor_mp_id !== null),
@@ -78,11 +80,11 @@ const SPECS = {
   p: {
     table: "provincial_bills",
     pk: "bill_id",
-    select: `title,current_stage,topic_tags,is_government_bill,sponsor_mpp_id,${SAVED}`,
-    input: (row: ProvincialRow): ItemInput => ({
-      itemType: "provincial_bill",
+    select: `bill_number,title,current_stage,is_government_bill,sponsor_mpp_id,${SAVED}`,
+    input: (row: ProvincialRow) => ({
+      itemType: "provincial_bill" as const,
+      number: row.bill_number,
       title: row.title,
-      details: topics(row.topic_tags),
       location: "",
       committee: "",
       sponsor: sponsorKind(row.is_government_bill, row.sponsor_mpp_id !== null),
@@ -92,42 +94,42 @@ const SPECS = {
   m: {
     table: "motions",
     pk: "motion_id",
-    select: `summary,result,wards(ward_number),meetings(committee_name),${SAVED}`,
-    input: (row: MotionRow): ItemInput => ({
-      itemType: "motion",
+    select: `motion_number,result,wards(ward_number),meetings(committee_name),${SAVED}`,
+    input: (row: MotionRow) => ({
+      itemType: "motion" as const,
+      number: row.motion_number,
       title: row.meetings.committee_name,
-      details: clip(row.summary),
       location: wardLabel(row.wards),
       committee: row.meetings.committee_name,
-      sponsor: "unknown",
+      sponsor: "unknown" as const,
       status: row.result ?? "on the agenda",
     }),
   } satisfies Spec<MotionRow>,
   d: {
     table: "dev_apps",
     pk: "app_id",
-    select: `address,application_type,status,wards(ward_number),${SAVED}`,
-    input: (row: DevAppRow): ItemInput => ({
-      itemType: "dev_app",
+    select: `file_number,address,application_type,status,wards(ward_number),${SAVED}`,
+    input: (row: DevAppRow) => ({
+      itemType: "dev_app" as const,
+      number: row.file_number,
       title: row.application_type,
-      details: "",
       location: [row.address, row.wards ? wardLabel(row.wards) : ""].filter(Boolean).join(", "),
       committee: "",
-      sponsor: "unknown",
+      sponsor: "unknown" as const,
       status: row.status,
     }),
   } satisfies Spec<DevAppRow>,
   c: {
     table: "consultations",
     pk: "consultation_id",
-    select: `title,description,closing_date,is_citywide,wards(ward_number),${SAVED}`,
-    input: (row: ConsultationRow): ItemInput => ({
-      itemType: "consultation",
+    select: `title,closing_date,is_citywide,wards(ward_number),${SAVED}`,
+    input: (row: ConsultationRow) => ({
+      itemType: "consultation" as const,
+      number: "",
       title: row.title,
-      details: clip(row.description),
       location: wardLabel(row.wards, row.is_citywide),
       committee: "",
-      sponsor: "unknown",
+      sponsor: "unknown" as const,
       status: row.closing_date ? `open until ${row.closing_date}` : "open",
     }),
   } satisfies Spec<ConsultationRow>,
@@ -147,7 +149,7 @@ function underLimit(key: string) {
 }
 
 /**
- * POST /api/summary {id} → the saved plain-language summary for that item.
+ * POST /api/summary {id} → the saved plain-language summary for that item, or {unavailable: "no_document" | "too_thin"}.
  * Generates and saves one on the first request; answers 202 while another request is generating it.
  */
 export async function POST(request: Request) {
@@ -162,9 +164,11 @@ export async function POST(request: Request) {
     const [row] = await selectFresh<Saved>(spec.table, `select=${spec.select}&${key}`);
     if (!row) return Response.json({ error: "No such item" }, { status: 404 });
 
-    const input = spec.input(row);
-    const source = createHash("sha256").update(describe(input)).digest("hex");
+    if (!row.source_text) return Response.json({ unavailable: "no_document" });
+    const input: ItemInput = { ...spec.input(row), document: row.source_text, truncated: row.source_text_truncated ?? false };
+    const source = sourceHash(input);
     if (row.plain_summary && row.plain_summary_source === source) {
+      if (row.plain_summary_confidence !== "high") return Response.json({ unavailable: "too_thin" });
       return Response.json({ summary: row.plain_summary, confidence: row.plain_summary_confidence });
     }
 
@@ -184,9 +188,11 @@ export async function POST(request: Request) {
       await patch(spec.table, key, {
         plain_summary: result.summary,
         plain_summary_confidence: result.confidence,
+        plain_summary_version: SUMMARY_VERSION,
         plain_summary_source: source,
         plain_summary_generated_at: new Date().toISOString(),
       });
+      if (result.confidence !== "high") return Response.json({ unavailable: "too_thin" });
       return Response.json(result);
     } catch (error) {
       await patch(spec.table, key, { plain_summary_generated_at: null }).catch(() => []);

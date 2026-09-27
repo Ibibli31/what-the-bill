@@ -61,6 +61,7 @@ the migrations first, in this order:
     db/migrations/2026-09-26-plain-titles-consultations-dev-apps.sql
     db/migrations/2026-09-26-plain-summaries.sql
     db/migrations/2026-09-26-member-photos.sql
+    db/migrations/2026-09-27-source-text.sql
 
 then the functions the site calls (re-run them whenever they change):
 
