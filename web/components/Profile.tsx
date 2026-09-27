@@ -160,13 +160,6 @@ export default function Profile({ placement = "corner" }: { placement?: "corner"
               <button type="button" className={styles.primary} onClick={startQuiz}>
                 Edit Profile
               </button>
-              <button
-                type="button"
-                className={styles.secondary}
-                onClick={() => setPersonalization(!profile.personalizationEnabled)}
-              >
-                {profile.personalizationEnabled ? "Turn off personalization" : "Turn on personalization"}
-              </button>
               <p className={styles.note}>
                 {profile.personalizationEnabled
                   ? "Your profile helps personalize the bills you see."
