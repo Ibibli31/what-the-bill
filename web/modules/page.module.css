@@ -384,3 +384,17 @@
   line-height: 44px;
   font-size: 24px;
 }
+
+/* Phone: the zoom buttons sit bottom-right, just above the bottom sheet */
+@media (max-width: 520px) {
+  .map.mapExpanded :global(.leaflet-top.leaflet-left) {
+    top: auto;
+    bottom: calc(50svh + 14px);
+    right: 14px;
+    transition: bottom 260ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .page:has([data-snap="peek"]) .map.mapExpanded :global(.leaflet-top.leaflet-left) {
+    bottom: calc(132px + 14px);
+  }
+}
