@@ -43,6 +43,31 @@ const PIN = {
 
 type Leaflet = typeof import("leaflet");
 
+/** How many pixels of the map the sidebar covers: its left edge on laptops, its bottom as a phone sheet. */
+function sidebarCover(map: LeafletMap) {
+  const sidebar = document.querySelector("[data-sidebar]");
+  if (!sidebar) return { left: 0, bottom: 0 };
+  const mapRect = map.getContainer().getBoundingClientRect();
+  const rect = sidebar.getBoundingClientRect();
+  const sheet = rect.width >= mapRect.width * 0.8;
+  return {
+    left: sheet ? 0 : Math.max(0, rect.right - mapRect.left),
+    bottom: sheet ? Math.max(0, mapRect.bottom - rect.top) : 0,
+  };
+}
+
+/** Grows `bounds` by the covered pixels at the current zoom, so its edges can be dragged out from under the sidebar. */
+function uncoveredBounds(L: Leaflet, map: LeafletMap, bounds: LatLngBounds) {
+  const { left, bottom } = sidebarCover(map);
+  const zoom = map.getZoom();
+  const sw = map.project(bounds.getSouthWest(), zoom);
+  const ne = map.project(bounds.getNorthEast(), zoom);
+  return L.latLngBounds(
+    map.unproject(L.point(sw.x - left, sw.y + bottom), zoom),
+    map.unproject(ne, zoom)
+  );
+}
+
 type CityMapProps = {
   location?: GeocodedLocation | null;
   boundary?: WardBoundary | null;
@@ -132,7 +157,7 @@ export default function CityMap({
     const frame = requestAnimationFrame(() => {
       map.invalidateSize();
       if (bounds) {
-        map.setMaxBounds(bounds);
+        map.setMaxBounds(expanded ? uncoveredBounds(L, map, bounds) : bounds);
         map.setMinZoom(map.getBoundsZoom(bounds));
       }
       if (!location) return;
@@ -144,6 +169,27 @@ export default function CityMap({
     });
     return () => cancelAnimationFrame(frame);
   }, [ready, location, expanded, bounds]);
+
+  // Full screen, the sidebar sits over the map, so widen the drag limit by what it covers.
+  // Re-measured before each drag and after each zoom, since the sidebar opens, closes and resizes.
+  useEffect(() => {
+    const map = mapRef.current;
+    const L = leafletRef.current;
+    if (!ready || !map || !L || !bounds || !expanded) return;
+    const container = map.getContainer();
+
+    const update = () => map.setMaxBounds(uncoveredBounds(L, map, bounds));
+    const frame = requestAnimationFrame(update);
+    // Capture phase, so the limit is updated before Leaflet starts the drag.
+    container.addEventListener("pointerdown", update, true);
+    map.on("zoomend", update);
+    return () => {
+      cancelAnimationFrame(frame);
+      container.removeEventListener("pointerdown", update, true);
+      map.off("zoomend", update);
+      map.setMaxBounds(bounds);
+    };
+  }, [ready, bounds, expanded]);
 
   useEffect(() => {
     const map = mapRef.current;
