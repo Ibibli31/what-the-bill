@@ -30,8 +30,16 @@ function nextAction(bill: Bill) {
   return null;
 }
 
-/** Summaries fetched this session, keyed by bill id. */
-const generated = new Map<string, string>();
+type Unavailable = "no_document" | "too_thin";
+
+/** Summaries fetched this session, keyed by bill id, or why the item has none. */
+const generated = new Map<string, { text: string } | { unavailable: Unavailable }>();
+
+/** Message shown in place of a summary, by reason. */
+const UNAVAILABLE: Record<Unavailable, string> = {
+  no_document: "There’s no official text for this item yet, so we can’t summarize it.",
+  too_thin: "The official text doesn’t say enough to summarize this item.",
+};
 
 const POLL_MS = 2000;
 const MAX_POLLS = 8;
@@ -39,7 +47,11 @@ const MAX_POLLS = 8;
 /** Fetches a plain-language summary for a bill that has none saved, waiting out a summary another request is writing. */
 function useGeneratedSummary(bill: Bill, enabled: boolean) {
   const needed = enabled && !bill.summary;
-  const [text, setText] = useState<string | null>(() => generated.get(bill.id) ?? null);
+  const cached = generated.get(bill.id);
+  const [text, setText] = useState<string | null>(() => (cached && "text" in cached ? cached.text : null));
+  const [unavailable, setUnavailable] = useState<Unavailable | null>(() =>
+    cached && "unavailable" in cached ? cached.unavailable : null
+  );
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
@@ -62,8 +74,13 @@ function useGeneratedSummary(bill: Bill, enabled: boolean) {
           continue;
         }
         if (!response.ok) throw new Error(`Summary request failed with ${response.status}`);
-        const { summary } = (await response.json()) as { summary: string };
-        generated.set(bill.id, summary);
+        const { summary, unavailable } = (await response.json()) as { summary?: string; unavailable?: Unavailable };
+        if (unavailable || !summary) {
+          generated.set(bill.id, { unavailable: unavailable ?? "no_document" });
+          setUnavailable(unavailable ?? "no_document");
+          return;
+        }
+        generated.set(bill.id, { text: summary });
         setText(summary);
         return;
       }
@@ -77,8 +94,9 @@ function useGeneratedSummary(bill: Bill, enabled: boolean) {
 
   return {
     text: bill.summary ?? text,
-    loading: needed && !text && !failed,
+    loading: needed && !text && !failed && !unavailable,
     failed: needed && !text && failed,
+    unavailable: needed ? unavailable : null,
     retry: () => setAttempt((count) => count + 1),
   };
 }
@@ -329,9 +347,6 @@ export default function BillDetail({
         </div>
 
         <h2 className={styles.title}>{plain ? bill.title : bill.officialTitle}</h2>
-        {plain && bill.officialTitle !== bill.title && (
-          <p className={styles.updated}>Official title: {bill.officialTitle}</p>
-        )}
         {bill.kind === "bill" && bill.updated && <p className={styles.updated}>Last activity: {bill.updated}</p>}
 
         {bill.facts.length > 0 && (
@@ -378,6 +393,8 @@ export default function BillDetail({
                 </button>
                 {bill.officialSummary && <p className={styles.text}>{bill.officialSummary}</p>}
               </>
+            ) : generatedSummary.unavailable ? (
+              <p className={styles.muted}>{UNAVAILABLE[generatedSummary.unavailable]}</p>
             ) : (
               <p className={styles.muted}>See the official text below.</p>
             )}

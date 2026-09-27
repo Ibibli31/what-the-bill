@@ -1,4 +1,5 @@
 node_modules/
+summarize/source-preview/
 .next/
 .DS_Store
 .env
