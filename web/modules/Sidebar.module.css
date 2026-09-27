@@ -515,7 +515,9 @@
   
   .rowVote b[data-vote="none"],
   .rowVote b[data-vote="paired"],
-  .rowVote b[data-vote="absent"] {
+  .rowVote b[data-vote="absent"],
+  .rowVote b[data-vote="abstain"],
+  .rowVote b[data-vote="noDissent"] {
     color: var(--text-faint);
     font-weight: 500;
   }

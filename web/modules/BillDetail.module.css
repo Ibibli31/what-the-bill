@@ -338,7 +338,11 @@
   .vote b[data-vote="paired"],
   .record b[data-vote="paired"],
   .vote b[data-vote="absent"],
-  .record b[data-vote="absent"] {
+  .record b[data-vote="absent"],
+  .vote b[data-vote="abstain"],
+  .record b[data-vote="abstain"],
+  .vote b[data-vote="noDissent"],
+  .record b[data-vote="noDissent"] {
     background: transparent;
     border: 1px dashed var(--control-border);
     color: var(--text-faint);

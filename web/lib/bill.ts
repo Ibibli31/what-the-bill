@@ -10,14 +10,19 @@ export type BillStatus =
   | "Defeated"
   | "Open"
   | "Closed";
-/** "none" = no recorded vote on this bill; "paired"/"absent" = the member didn't vote. */
-export type Vote = "yes" | "no" | "paired" | "absent" | "none";
+/**
+ * "none" = no vote recorded for this member; "paired"/"absent"/"abstain" = they didn't vote.
+ * "noDissent" = council recorded only dissenters, and this councillor wasn't one.
+ */
+export type Vote = "yes" | "no" | "paired" | "absent" | "abstain" | "noDissent" | "none";
 
 export const VOTE_LABEL: Record<Vote, string> = {
   yes: "Yes",
   no: "No",
   paired: "Paired",
   absent: "Absent",
+  abstain: "Abstained",
+  noDissent: "Didn't dissent",
   none: "No recorded vote",
 };
 
@@ -88,12 +93,15 @@ export type Bill = {
   /** This address's representative's vote. Filled in by the sidebar; null if unknown. */
   repVote: Vote | null;
   /**
-   * Each member's vote on the latest recorded division, keyed by riding code.
+   * Each member's vote on the latest recorded division, keyed by riding code
+   * (ward number for councillors).
    * Null where no voting data is loaded for this level.
    */
   votesByRiding: Record<string, Vote> | null;
   /** The division `votesByRiding` comes from, e.g. "Third Reading" on 2026-03-25. */
   latestVote: { label: string; date: string } | null;
+  /** Why members have no individual vote, e.g. council passed it by consensus. */
+  voteContext: string | null;
   lobbying: { group: string; meetings: number }[];
   stages: { label: string; done: boolean }[];
   sourceUrl: string;

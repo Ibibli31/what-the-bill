@@ -77,16 +77,25 @@ function useGeneratedSummary(bill: Bill, enabled: boolean) {
 }
 
 function voteNote(vote: Vote, bill: Bill) {
-  const on = bill.latestVote ? ` on ${bill.latestVote.label.toLowerCase()} (${bill.latestVote.date})` : "";
+  // Bills vote "on third reading"; motions vote "at City Council" or at a committee.
+  const on = bill.latestVote
+    ? bill.kind === "motion"
+      ? ` at ${bill.latestVote.label} (${bill.latestVote.date})`
+      : ` on ${bill.latestVote.label.toLowerCase()} (${bill.latestVote.date})`
+    : "";
   switch (vote) {
     case "none":
-      return "No recorded vote on this bill. Many bills pass stages without one.";
+      return bill.voteContext ?? "No recorded vote on this bill. Many bills pass stages without one.";
+    case "noDissent":
+      return bill.voteContext ?? `Didn't dissent${on}.`;
+    case "abstain":
+      return `Abstained${on}.`;
     case "paired":
       return `Paired${on}: agreed with a member on the other side that neither would vote.`;
     case "absent":
       return `Didn't vote in the recorded division${on}.`;
     default:
-      return `Recorded division${on}.`;
+      return bill.kind === "motion" ? `Recorded vote${on}.` : `Recorded division${on}.`;
   }
 }
 
@@ -222,7 +231,9 @@ export default function BillDetail({
               </div>
             ) : (
               <p className={styles.muted}>
-                {bill.votesByRiding ? "Shows once your riding is found." : "Voting records for this level aren't loaded yet."}
+                {bill.votesByRiding
+                ? `Shows once your ${bill.kind === "motion" ? "ward" : "riding"} is found.`
+                : "Voting records for this level aren't loaded yet."}
               </p>
             )}
           </section>
@@ -364,6 +375,12 @@ export function RepDetail({
   const voted = bills.filter((bill) => bill.repVote && bill.repVote !== "none");
   const yes = voted.filter((bill) => bill.repVote === "yes").length;
   const no = voted.filter((bill) => bill.repVote === "no").length;
+  // Most council motions carry without a recorded vote, so no councillor has a vote on them.
+  const council = role.short === "CLR";
+  const unrecorded = council
+    ? bills.filter((bill) => bill.kind === "motion" && !bill.latestVote && bill.statusLabel.startsWith("Carried"))
+        .length
+    : 0;
 
   return (
     <>
@@ -429,7 +446,7 @@ export function RepDetail({
         <div className={styles.stats}>
           <div>
             <b>{voted.length}</b>
-            <span>votes on these bills</span>
+            <span>{council ? "recorded votes" : "votes on these bills"}</span>
           </div>
           <div>
             <b>{yes}</b>
@@ -441,11 +458,22 @@ export function RepDetail({
           </div>
         </div>
 
+        {unrecorded > 0 && (
+          <p className={styles.muted}>
+            {unrecorded} other motion{unrecorded === 1 ? "" : "s"} passed without a recorded vote. Ottawa
+            council only records each councillor’s vote when a member asks for one.
+          </p>
+        )}
+
         <section className={styles.section}>
           <p className={styles.label}>Voting record</p>
           {voted.length === 0 && (
             <p className={styles.muted}>
-              {rep ? "No recorded votes on these bills yet." : "Shows once the ward lookup is connected."}
+              {rep
+                ? council
+                  ? "No recorded votes on these motions yet."
+                  : "No recorded votes on these bills yet."
+                : "Shows once the ward lookup is connected."}
             </p>
           )}
           <ul className={styles.record}>

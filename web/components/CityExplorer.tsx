@@ -96,6 +96,8 @@ export default function CityExplorer({
     ? {
         name: ward.councillor.name,
         district: `Ward ${ward.number} – ${ward.name}`,
+        // Motion votes are keyed by ward number.
+        districtCode: String(ward.number),
         email: ward.councillor.email ?? undefined,
         phone: ward.councillor.phone ?? undefined,
       }
