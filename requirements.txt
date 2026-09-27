@@ -1,0 +1,79 @@
+What The Bill - developer requirements
+======================================
+
+This is NOT a pip file. The project has no Python code; everything is Node.js.
+There are two npm projects, each with its own package.json (see setup.txt):
+
+  web/         the Next.js site (required)
+  summarize/   an optional batch job that writes plain-language titles
+
+Versions below are what is currently in use.
+
+
+System tools
+------------
+Node.js       20 or newer (tested on 24.21.0; the summarize job needs 20.6+
+              for --env-file)
+npm           10 or newer (tested on 11.19.0; ships with Node)
+Git           any recent version
+
+
+Accounts / services
+-------------------
+Supabase project   Postgres + PostGIS database holding wards, ridings,
+                   councillors, MPs, MPPs, bills, motions, consultations and
+                   development applications, plus the public "member-photos"
+                   storage bucket. You need its project URL and service role key.
+
+Google Gemini      Server-side only. Used for plain-language summaries and
+                   titles, and for "How this bill could affect you".
+
+Public APIs used from the browser (no key required, fair-use limits apply):
+  Nominatim   https://nominatim.openstreetmap.org   address -> lat/lon on submit
+  Photon      https://photon.komoot.io              address suggestions while typing
+  OpenFreeMap https://openfreemap.org               map tiles
+
+User profiles (personalization answers) are stored only in the visitor's
+browser (localStorage). There is no user table or login.
+
+
+Environment variables (repo-root .env, never commit it)
+-------------------------------------------------------
+SUPABASE_URL                 e.g. https://<project-ref>.supabase.co  (no trailing slash)
+SUPABASE_SERVICE_ROLE_KEY    server-only secret; full database access
+GEMINI_API_KEY               server-only secret; without it the site runs but
+                             summaries and personalized impacts fail
+GEMINI_MODEL                 optional; defaults to gemini-3.8-flash
+
+None of these may use the NEXT_PUBLIC_ prefix - that would ship them to the browser.
+
+
+npm packages - web/package.json
+-------------------------------
+Runtime
+  next                            15.5.26
+  react                           19.3.0
+  react-dom                       19.3.0
+  leaflet                         1.9.4
+  maplibre-gl                     6.11.2
+  @maplibre/maplibre-gl-leaflet   0.1.4
+  @google/genai                   1.0.0
+  @fontsource/archivo             5.3.0
+  @fontsource/ibm-plex-sans       5.3.0
+
+Development
+  typescript                      5.9.3
+  @types/node                     22.20.4
+  @types/react                    19.3.0
+  @types/react-dom                19.3.0
+  @types/leaflet                  1.9.22
+  nodemon                         3.1.14
+
+Used only by web/scripts/upload-member-photos.mjs
+  sharp                           0.35.4 (not listed in package.json; installed
+                                  automatically as a dependency of next)
+
+
+npm packages - summarize/package.json
+-------------------------------------
+  @google/genai                   ^1.0.0

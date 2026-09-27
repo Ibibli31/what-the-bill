@@ -1,0 +1,145 @@
+What The Bill - developer setup
+===============================
+
+The site lives in web/ (Next.js). Run its npm commands from inside web/, not
+the repo root - there is no package.json at the root. summarize/ is a separate,
+optional npm project for batch-writing plain-language titles.
+
+
+1. Install the tools
+--------------------
+Install Node.js 20+ (includes npm) and Git. Check with:
+
+    node -v
+    npm -v
+
+
+2. Clone the repo
+-----------------
+    git clone https://github.com/Ibibli31/what-the-bill.git
+    cd what-the-bill
+
+
+3. Create the .env file
+-----------------------
+Create a file named .env in the REPO ROOT (next to README.md, not in web/):
+
+    SUPABASE_URL=https://<project-ref>.supabase.co
+    SUPABASE_SERVICE_ROLE_KEY=<service role key>
+    GEMINI_API_KEY=<Google AI Studio key>
+
+Get the Supabase values from the dashboard: Project Settings -> API.
+Leave off the trailing slash on the URL.
+
+Get the Gemini key from https://aistudio.google.com/apikey. The site runs
+without it, but plain-language summaries and "How this bill could affect
+you" fail. Optionally set GEMINI_MODEL to override the default model.
+
+.env is gitignored - never commit it or paste the keys anywhere public, and
+never rename them to NEXT_PUBLIC_*. web/next.config.mjs loads this file
+automatically; restart the dev server after changing it.
+
+
+4. Install dependencies
+-----------------------
+    cd web
+    npm install
+
+This also runs scripts/copy-maplibre-worker.mjs (postinstall), which copies
+the MapLibre worker into web/public/maplibre/. If the map is blank, re-run
+npm install.
+
+
+5. Set up the database (once per Supabase project)
+--------------------------------------------------
+Skip this if you are using the shared project - it is already set up.
+
+The tables are described in db/schema.md. In the Supabase SQL Editor, run
+the migrations first, in this order:
+
+    db/migrations/2026-09-26-plain-titles.sql
+    db/migrations/2026-09-26-plain-titles-consultations-dev-apps.sql
+    db/migrations/2026-09-26-plain-summaries.sql
+    db/migrations/2026-09-26-member-photos.sql
+
+then the functions the site calls (re-run them whenever they change):
+
+    db/functions/ward_lookup.sql     used by /api/ward
+    db/functions/riding_lookup.sql   used by /api/riding
+    db/functions/ottawa_mask.sql     used by /api/ottawa-mask
+
+
+6. Run the site
+---------------
+From web/:
+
+    npm run dev
+
+Open http://localhost:3000
+
+
+Other commands (from web/)
+--------------------------
+    npm run build    production build (also type-checks)
+    npm run start    serve the production build
+
+
+Optional jobs
+-------------
+Plain-language titles (writes to Supabase, uses Gemini):
+
+    cd summarize
+    npm install
+    npm run titles -- --dry --limit 10    preview only
+    npm run titles                        write titles
+
+Member photos (uploads portraits to the "member-photos" bucket and sets
+photo_url; run from web/):
+
+    node --env-file=../.env scripts/upload-member-photos.mjs "<photo folder>" --dry-run
+    node --env-file=../.env scripts/upload-member-photos.mjs "<photo folder>"
+
+Plain-language summaries need no job: web/app/api/summary writes each one the
+first time someone opens the item.
+
+
+How the Gemini features work
+----------------------------
+All Gemini calls happen on the server, so the key never reaches the browser:
+
+    Summaries     web/app/api/summary  -> web/lib/summarize.ts
+    "How this bill could affect you"
+                  web/app/api/impacts  -> web/lib/impacts.ts
+
+The personalization profile is saved in the visitor's browser (localStorage,
+key "wtb.profile.v1"). To reset it while testing, run this in the browser
+console:  localStorage.removeItem("wtb.profile.v1")
+
+
+Troubleshooting
+---------------
+"Could not read package.json" on npm install
+    You are in the repo root. cd web first.
+
+"Module not found: Can't resolve 'leaflet'" / '@google/genai' (or another package)
+    Someone added a dependency. Run npm install in web/ after every pull.
+
+"SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set"
+    .env is missing, in the wrong folder, or the server was not restarted.
+
+Summaries or "How this bill could affect you" always show an error
+    GEMINI_API_KEY is missing, or the dev server was started before it was
+    added. Check the server terminal, then restart npm run dev.
+
+git pull fails: "local changes to ... would be overwritten"
+    If it is only web/package-lock.json, npm install tweaked it. Discard it:
+        git restore web/package-lock.json
+        git pull
+    If it is your own work, keep it and pull on top:
+        git stash
+        git pull
+        git stash pop
+
+Port 3000 already in use
+    Another dev server is running. Stop it, or run: npx next dev -p 3001
+    Only run one dev server at a time - two can hold different .env values.
