@@ -450,7 +450,7 @@ export default function Sidebar({
                 aria-pressed={filters.textStyle === "official"}
                 onClick={() => update("textStyle", "official")}
               >
-                Official text
+                Official Text
               </button>
             </div>
 
