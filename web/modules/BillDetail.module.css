@@ -256,6 +256,64 @@
     border-radius: var(--radius-inner);
   }
   
+  /* "How this bill could affect you": opens the personalized view */
+  .personalize {
+    align-self: stretch;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 16px;
+    border: 1.5px solid var(--ink);
+    border-radius: 14px;
+    background: var(--panel);
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 150ms ease;
+  }
+
+  .personalize:hover {
+    background: var(--hover);
+  }
+
+  .personalize:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  /* Personalized view: "Based on your profile" under the heading, then one block per impact */
+  .personalHead {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .personalHead > * {
+    margin: 0;
+  }
+
+  .personalBasis {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--copper);
+  }
+
+  .personalList {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .title:focus {
+    outline: none;
+  }
+
   /* Kind-specific facts: address, application type, closing date */
   .facts {
     margin: 0;

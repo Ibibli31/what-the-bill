@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState, type ReactNode } from "react";
 import CityMap from "@/components/CityMap";
 import LocationSearch from "@/components/LocationSearch";
+import Profile from "@/components/Profile";
 import Sidebar, { type Representative } from "@/components/Sidebar";
 import type { Level } from "@/lib/bill";
 import type { Bill } from "@/lib/bill";
@@ -136,16 +137,19 @@ export default function CityExplorer({
           {!expanded && <p className={styles.mapTag}>Your city · Ottawa</p>}
           {expanded && location && (
             <div className={styles.mapSearch}>
-              <LocationSearch
-                id="map-location"
-                compact
-                currentAddress={location.displayName}
-                onSearch={handleSearch}
-                onSelect={showLocation}
-                onClear={() => setError(null)}
-                busy={searching}
-                error={error}
-              />
+              <div className={styles.mapSearchField}>
+                <LocationSearch
+                  id="map-location"
+                  compact
+                  currentAddress={location.displayName}
+                  onSearch={handleSearch}
+                  onSelect={showLocation}
+                  onClear={() => setError(null)}
+                  busy={searching}
+                  error={error}
+                />
+              </div>
+              <Profile placement="map" />
             </div>
           )}
         </div>
@@ -180,6 +184,9 @@ export default function CityExplorer({
           billsError={bills === null}
         />
       )}
+
+      {/* One profile button at a time: in the page corner, or beside the map's address bar. */}
+      {!expanded && <Profile />}
     </>
   );
 }

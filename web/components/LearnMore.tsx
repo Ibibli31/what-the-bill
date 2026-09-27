@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { announcePopupOpen, onOtherPopupOpen } from "@/lib/popups";
 import pageStyles from "@/modules/page.module.css";
 import styles from "@/modules/LearnMore.module.css";
 
@@ -62,6 +63,8 @@ const FEATURES: Feature[] = [
 export default function LearnMore() {
   const [open, setOpen] = useState(false);
 
+  useEffect(() => onOtherPopupOpen("learn-more", () => setOpen(false)), []);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
@@ -102,7 +105,10 @@ export default function LearnMore() {
         className={pageStyles.learnMore}
         aria-expanded={open}
         aria-controls="learn-more"
-        onClick={() => setOpen((isOpen) => !isOpen)}
+        onClick={() => {
+          if (!open) announcePopupOpen("learn-more");
+          setOpen(!open);
+        }}
       >
         {open ? "Hide" : "Learn more"}
       </button>

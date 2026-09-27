@@ -1,9 +1,16 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { VOTE_LABEL, type Bill, type ItemKind, type Vote } from "@/lib/bill";
+import type { UserProfile } from "@/lib/profile";
+import { useProfile } from "@/lib/useProfile";
 import type { Representative, TextStyle } from "@/components/Sidebar";
 import GlossaryText from "@/components/GlossaryText";
+import {
+  cachedImpacts,
+  getPersonalizedImpacts,
+  type PersonalizedImpact,
+} from "@/services/personalizedImpacts";
 import styles from "@/modules/BillDetail.module.css";
 
 type Role = { role: string; short: string; label: string };
@@ -76,6 +83,46 @@ function useGeneratedSummary(bill: Bill, enabled: boolean) {
   };
 }
 
+/** What to call the item in "How this … could affect you". */
+const NOUN: Record<ItemKind, string> = {
+  bill: "bill",
+  motion: "motion",
+  consultation: "consultation",
+  devApp: "development",
+};
+
+type ImpactState =
+  | { status: "loading" }
+  | { status: "done"; impacts: PersonalizedImpact[] }
+  | { status: "failed" };
+
+/** The Gemini analysis for this bill and profile, requested only while `active`. */
+function usePersonalizedImpacts(bill: Bill, profile: UserProfile | null, active: boolean) {
+  const [state, setState] = useState<ImpactState>({ status: "loading" });
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    if (!active || !profile?.personalizationEnabled) return;
+    const cached = cachedImpacts(bill, profile);
+    if (cached) {
+      setState({ status: "done", impacts: cached });
+      return;
+    }
+    // Not aborted on "Back": the result is cached, so reopening the view shows it straight away.
+    let current = true;
+    setState({ status: "loading" });
+    getPersonalizedImpacts(bill, profile).then(
+      (impacts) => current && setState({ status: "done", impacts }),
+      () => current && setState({ status: "failed" })
+    );
+    return () => {
+      current = false;
+    };
+  }, [bill, profile, active, attempt]);
+
+  return { ...state, retry: () => setAttempt((count) => count + 1) };
+}
+
 function voteNote(vote: Vote, bill: Bill) {
   // Bills vote "on third reading"; motions vote "at City Council" or at a committee.
   const on = bill.latestVote
@@ -138,6 +185,102 @@ export default function BillDetail({
   // Votes and lobbying are recorded for bills and council motions only.
   const legislative = bill.kind === "bill" || bill.kind === "motion";
   const action = nextAction(bill);
+
+  const profile = useProfile();
+  const canPersonalize = Boolean(profile?.personalizationEnabled);
+  const [view, setView] = useState<"overview" | "personal">("overview");
+  // Switching personalization off elsewhere drops straight back to the overview.
+  const personal = view === "personal" && canPersonalize;
+  const impacts = usePersonalizedImpacts(bill, profile, personal);
+  const noun = NOUN[bill.kind];
+  const personalHeadingRef = useRef<HTMLHeadingElement>(null);
+  const personalizeButtonRef = useRef<HTMLButtonElement>(null);
+  const switchedRef = useRef(false);
+
+  useEffect(() => {
+    if (!canPersonalize) setView("overview");
+  }, [canPersonalize]);
+
+  // Move focus (and scroll) to the start of whichever view was just opened.
+  useEffect(() => {
+    if (!switchedRef.current) return;
+    (personal ? personalHeadingRef : personalizeButtonRef).current?.focus();
+  }, [personal]);
+
+  function showView(next: "overview" | "personal") {
+    switchedRef.current = true;
+    setView(next);
+  }
+
+  if (personal) {
+    return (
+      <>
+        <Titlebar title={bill.number} onClose={onClose} />
+        <div className={styles.body}>
+          <div className={styles.personalHead}>
+            <h2 ref={personalHeadingRef} tabIndex={-1} className={styles.title}>
+              How this {noun} could affect you
+            </h2>
+            <p className={styles.personalBasis}>
+              Based on your profile
+              <span className={styles.aiTag}>AI-generated</span>
+            </p>
+            <p className={styles.updated}>{bill.title}</p>
+          </div>
+
+          {impacts.status === "loading" && (
+            <section className={styles.section} role="status">
+              <p className={styles.muted}>Analyzing this {noun} based on your profile...</p>
+              <div className={styles.skeleton} aria-hidden="true">
+                <i />
+                <i />
+                <i />
+              </div>
+            </section>
+          )}
+
+          {impacts.status === "failed" && (
+            <section className={styles.section} role="alert">
+              <p className={styles.text}>We couldn&rsquo;t generate a personalized analysis right now.</p>
+              <p className={styles.muted}>Please try again later.</p>
+              <button type="button" className={styles.retry} onClick={impacts.retry}>
+                Try again
+              </button>
+            </section>
+          )}
+
+          {impacts.status === "done" && impacts.impacts.length === 0 && (
+            <p className={styles.text}>
+              We didn&rsquo;t identify a direct connection between this {noun} and the information in your
+              profile.
+            </p>
+          )}
+
+          {impacts.status === "done" && impacts.impacts.length > 0 && (
+            <ul className={styles.personalList}>
+              {impacts.impacts.map((impact, index) => (
+                <li key={index} className={`${styles.section} ${styles.impact}`}>
+                  <p className={styles.label}>{impact.category}</p>
+                  <p className={styles.text}>{impact.explanation}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {impacts.status !== "loading" && (
+            <p className={styles.muted}>
+              These are possible connections, not predictions or advice. Read the official text for the full
+              details.
+            </p>
+          )}
+
+          <button type="button" className={styles.source} onClick={() => showView("overview")}>
+            Back to {noun} overview
+          </button>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -208,6 +351,21 @@ export default function BillDetail({
               <p className={styles.muted}>See the official text below.</p>
             )}
           </section>
+        )}
+
+        {canPersonalize && (
+          <button
+            ref={personalizeButtonRef}
+            type="button"
+            className={styles.personalize}
+            onClick={() => showView("personal")}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="8.5" r="3.8" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M4.5 20c0-4 3.4-6.5 7.5-6.5s7.5 2.5 7.5 6.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+            How this {noun} could affect you
+          </button>
         )}
 
         {bill.impact && (

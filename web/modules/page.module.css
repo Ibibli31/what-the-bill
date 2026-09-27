@@ -127,6 +127,14 @@
   right: 76px; /* room for the 44px zoom buttons + a 12px gap */
   z-index: 1;
   max-width: 640px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.mapSearchField {
+  flex: 1;
+  min-width: 0;
 }
 
 .map.mapExpanded {
